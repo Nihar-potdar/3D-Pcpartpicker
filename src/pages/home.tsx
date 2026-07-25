@@ -1,7 +1,7 @@
 import Card from "@/components/ui organized/card";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import LineByLineSlide from "@/components/smoothui/line-by-line-slide/index";
+import LineByLineSlide from "@/components/ui/smoothui/line-by-line-slide/index";
 import PixelSnow from "@/components/ui/PixelSnow";
 import LineSidebar from "@/components/ui/LineSidebar";
 
@@ -72,7 +72,7 @@ export default function Home() {
 
 
         <div className="flex *:m-2 cursor-pointer">
-          <MotionButton size="2xl" variant="secondary" className="rounded-full bg-accent text-secondary hover:bg-accent/80 ">
+          <MotionButton size="2xl" variant="secondary" className="rounded-full bg-accent text-secondary hover:bg-accent/80">
             Create your own Build
           </MotionButton>
           <Button size="2xl" className="rounded-full bg-accent-foreground text-primary hover:bg-accent-foreground/80">

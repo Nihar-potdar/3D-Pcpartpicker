@@ -2,8 +2,10 @@
 
 import Home from "@/pages/home";
 import { motion } from "motion/react";
+import { CompatibilityChecker } from "@/Logic/Compatibility";
 
 export default function Page() {
+  CompatibilityChecker();
   return (
     <>
       <motion.div
