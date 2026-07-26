@@ -7,7 +7,7 @@ export const motherboards: Motherboard[] = [
     brand: "MSI",
     image: "/motherboard/b650-tomahawk.png",
     price: 22999,
-    socket: "AM5",
+    socket: "AM4",
     chipset: "B650",
     formFactor: "ATX",
     ramType: "DDR5",
