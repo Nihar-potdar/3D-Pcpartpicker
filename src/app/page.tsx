@@ -1,11 +1,12 @@
 "use client";
 
 import Home from "@/pages/home";
-import { motion } from "motion/react";
-import { CompatibilityChecker } from "@/Logic/Compatibility";
+import { motion } from "framer-motion";
+import { MoboCpuCompatible, MoboRamCompatible } from "@/Logic/Compatibility";
 
 export default function Page() {
-  CompatibilityChecker();
+  MoboCpuCompatible();
+  MoboRamCompatible();
   return (
     <>
       <motion.div

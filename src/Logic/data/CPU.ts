@@ -1,6 +1,6 @@
-import type { CPU } from "@/Logic/data/type"
+import type { CPU } from "@/Logic/data/type";
 
- const cpus: CPU[] = [
+export const cpus: CPU[] = [
   {
     id: 1,
     name: "AMD Ryzen 5 5600",
@@ -32,5 +32,3 @@ import type { CPU } from "@/Logic/data/type"
     performanceScore: 98,
   },
 ];
-
-export default cpus;

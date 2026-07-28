@@ -1,58 +1,62 @@
-import  cpus  from "./data/CPU";
+import { cpus }from "./data/CPU";
 import { motherboards } from "./data/MOTHERBOARD";
+import { ram } from "./data/RAM";
 
+export function MoboCpuCompatible() {
+  const cpu = cpus.map((cpu, index) => `${index + 1} ${cpu.name}`).join("\n");
+  const cpuSelect = prompt(`choose a cpu: ${cpu}`);
 
-export function CompatibilityChecker () {
+  if (cpuSelect == null) {
+    console.log("input null");
+    return;
+  }
 
-  //Map creates a new array based on the return values
-  const socketCheck = cpus.map(({ id, socket, name }, index) => {
-    //destrucuring the source items wih a safety fallback 
-    const { name: NAME, socket: socketType } = motherboards[index] || {};
+  const selectionIndex = parseInt(cpuSelect) - 1;
+  if (!cpus[selectionIndex]) {
+    console.log("invalid input");
+    return;
+  }
+  const selectedCpu = cpus[selectionIndex];
 
-    if (!socket) {
-      return(`Error: no matching slot found ${name}`)
-    }
-
-    //Compatibility logic
-    const socketMatches = socket === socketType;
-    
+  const results = motherboards.map((board) => {
+    const isCompatible = board.socket === selectedCpu.socket;
     return {
-      id,
-      isCompatible: socketMatches,
-      failures: [
-        (!socketMatches ? "Connector Mismatch" : null)
-      ].filter(Boolean)
-      
-    }
-  })
-  const CompatibleOnly = socketCheck.filter(result => result.isCompatible)
+      cpu: selectedCpu.name,
+      compatibility: isCompatible,
+      motherboard: `${board.name}`,
+    };
+  });
 
-  console.log(CompatibleOnly);
-  
-  // //looping through the first array
-  // for (const [index, { name, socket }] of cpus.entries()) {
-
-  //   //Destructuring the second array 
-  //   const { name: NAME, socket: socketType } = motherboards[index] || {};
-
-  //   //safety check
-  //   if (!socket) {
-  //     console.log(`Error: no matching slot found ${name}`)
-  //     continue;
-  //   }
-
-  //   //Run compatibility check
-  //   const socketMatches = socket === socketType;
-
-  //   // Output results
-  //   if (socketMatches) {
-  //     console.log(`${socketType}${NAME} is COMPATIBLE with ${name}`)
-  //   } else {
-  //     console.log(`INCOMPATIBLE pairing ${name}: with ${socket}${NAME}`)
-  //   }
-  // }
+  console.log(results);
+  // return results;
 }
 
+export function MoboRamCompatible() {
+  const rams = ram.map((ram, index) => `${index + 1} ${ram.name}`).join("\n");
+  const ramSelect = prompt(`Choose Ram: ${rams}`);
 
+  if (ramSelect == null) {
+    console.log("invalid entry: NULL");
+    return;
+  }
 
+  const selectedIndex = parseInt(ramSelect) - 1;
 
+  if (!ram[selectedIndex]) {
+    console.log("Invalid output");
+    return;
+  }
+
+  const selectedRam = ram[selectedIndex];
+
+  const results = motherboards.map((board) => {
+    const isCompatible = board.ramType === selectedRam.type;
+    return {
+      isCompatible: isCompatible,
+      motherboard: board.name,
+      ram: selectedRam.name,
+    };
+  });
+  console.log(results);
+  // return results;
+}
