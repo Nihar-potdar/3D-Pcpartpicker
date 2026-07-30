@@ -2,11 +2,12 @@
 
 import Home from "@/pages/home";
 import { motion } from "framer-motion";
-import { MoboCpuCompatible, MoboRamCompatible } from "@/Logic/Compatibility";
+import { MoboCpuCompatible, MoboRamCompatible, MoboCaseCompatibile } from "@/Logic/Compatibility";
 
 export default function Page() {
-  MoboCpuCompatible();
-  MoboRamCompatible();
+  // MoboCpuCompatible();
+  // MoboCaseCompatibile();
+  // MoboRamCompatible();
   return (
     <>
       <motion.div

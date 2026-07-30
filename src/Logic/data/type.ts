@@ -1,3 +1,5 @@
+import { number } from "framer-motion";
+
 export type CPU = {
   id: number;
   name: string;
@@ -52,3 +54,32 @@ export type Motherboard = {
   ramType: "DDR4" | "DDR5";
   wifi: boolean;
 };
+
+export type STORAGE = {
+  id: number;
+  name: string;
+  brand: string;
+  image: string;
+  price: number;
+  connecter: string;
+  speed: string;
+  storagetype: string;
+};
+
+export type CASE = {
+  id: number;
+  name: string;
+  brand: string;
+  image: string;
+  price: number;
+
+  formFactor: "ATX" | "Micro ATX" | "Mini ITX";
+
+  maxGpuLength: number; // mm
+  maxCoolerHeight: number; // mm
+  radiatorSupport: string; // "240mm", "360mm"
+  color: string;
+  rgb: boolean;
+
+  temperedGlass: boolean;
+};  
