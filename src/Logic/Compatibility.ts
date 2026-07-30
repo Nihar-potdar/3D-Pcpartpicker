@@ -3,6 +3,61 @@ import { motherboards } from "./data/motherboard";
 import { ramKits } from "./data/ram";
 import { cases } from "./data/case";
 
+
+//MAIN CPU FUNCTION
+
+export function isCpuCompatible() {
+  const cpu = cpus.map((cpu, index) => `${index + 1} ${cpu.name}`).join("\n");
+  const cpuSelect = prompt(`choose a cpu: ${cpu}`);
+
+  if (cpuSelect == null) {
+    console.log("input null");
+    return;
+  }
+  const selectionIndex = parseInt(cpuSelect) - 1;
+  if (!cpus[selectionIndex]) {
+    console.log("invalid input");
+    return;
+  }
+  const selectedCpu = cpus[selectionIndex];
+
+  const motherboardresult = motherboards.map((board) => {
+    const isCpuCompatible = board.socket === selectedCpu.socket;
+
+    if (!isCpuCompatible) {
+      return {
+        CPU: selectedCpu.name,
+        MotherBoard: board.name,
+        isCpuCompatible: false,
+      };
+    }
+
+    const ramCompatibility = ramKits.map((RAM) => {
+      const isCompatible = RAM.type === board.ramType;
+      return {
+        isRamCompatible: isCompatible,
+        compatibleRam: RAM.name,
+      };
+    });
+
+    const compatibleRam = ramCompatibility.filter(
+      (item) => item.isRamCompatible,
+    );
+    return {
+      CPU: selectedCpu.name,
+      MotherBoard: board.name,
+      isCpuCompatible: isCpuCompatible,
+      Ram: compatibleRam,
+    };
+  });
+  console.log(motherboardresult);
+  return motherboardresult;
+}
+
+
+
+
+
 export function MoboCpuCompatible() {
   const cpu = cpus.map((cpu, index) => `${index + 1} ${cpu.name}`).join("\n");
   const cpuSelect = prompt(`choose a cpu: ${cpu}`);
@@ -64,13 +119,6 @@ export function MoboRamCompatible() {
   return results;
 }
 
-
-
-
-// take in mobo input
-// safety check the input
-// loop through the Cases through the .map() func and output to a new array
-// return the Mobo name - isCompatible - Case name
 export function MoboCaseCompatibile() {
   const motherboard = motherboards
     .map((motherboard, index) => `${index + 1} ${motherboard.name}`)
@@ -101,15 +149,4 @@ export function MoboCaseCompatibile() {
   console.log(results);
   return results;
 }
-
-
-
-// GOAL: to check if the CPU is compatible with the ram
-
-//steps
-//Take in a CPU input
-//
-
-
-
 
