@@ -3,7 +3,6 @@ import { motherboards } from "./data/motherboard";
 import { ramKits } from "./data/ram";
 import { cases } from "./data/case";
 
-
 //MAIN CPU FUNCTION
 
 export function isCpuCompatible() {
@@ -48,15 +47,11 @@ export function isCpuCompatible() {
       MotherBoard: board.name,
       isCpuCompatible: isCpuCompatible,
       Ram: compatibleRam,
-    };
+    };  
   });
   console.log(motherboardresult);
   return motherboardresult;
 }
-
-
-
-
 
 export function MoboCpuCompatible() {
   const cpu = cpus.map((cpu, index) => `${index + 1} ${cpu.name}`).join("\n");
@@ -146,7 +141,6 @@ export function MoboCaseCompatibile() {
     };
   });
 
-  console.log(results);
+  console.log(results); // 
   return results;
 }
-

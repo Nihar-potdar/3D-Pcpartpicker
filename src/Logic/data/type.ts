@@ -1,5 +1,3 @@
-import { number } from "framer-motion";
-
 export type CPU = {
   id: number;
   name: string;
