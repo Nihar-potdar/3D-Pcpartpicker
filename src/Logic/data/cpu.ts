@@ -2,6 +2,7 @@ import type { CPU } from "./type";
 
 export const cpus: CPU[] = [
   {
+    componentType: "CPU",
     id: 1,
     name: "AMD Ryzen 5 5600",
     brand: "AMD",
@@ -17,6 +18,7 @@ export const cpus: CPU[] = [
     performanceScore: 67,
   },
   {
+    componentType: "CPU",
     id: 2,
     name: "AMD Ryzen 7 5700X3D",
     brand: "AMD",
@@ -32,6 +34,7 @@ export const cpus: CPU[] = [
     performanceScore: 82,
   },
   {
+    componentType: "CPU",
     id: 3,
     name: "AMD Ryzen 5 7600",
     brand: "AMD",
@@ -47,6 +50,7 @@ export const cpus: CPU[] = [
     performanceScore: 78,
   },
   {
+    componentType: "CPU",
     id: 4,
     name: "AMD Ryzen 7 7800X3D",
     brand: "AMD",
@@ -62,6 +66,7 @@ export const cpus: CPU[] = [
     performanceScore: 94,
   },
   {
+    componentType: "CPU",
     id: 5,
     name: "AMD Ryzen 9 9900X",
     brand: "AMD",
@@ -77,6 +82,7 @@ export const cpus: CPU[] = [
     performanceScore: 96,
   },
   {
+    componentType: "CPU",
     id: 6,
     name: "Intel Core i5-12400F",
     brand: "Intel",
@@ -92,6 +98,7 @@ export const cpus: CPU[] = [
     performanceScore: 66,
   },
   {
+    componentType: "CPU",
     id: 7,
     name: "Intel Core i5-13600K",
     brand: "Intel",
@@ -107,6 +114,7 @@ export const cpus: CPU[] = [
     performanceScore: 86,
   },
   {
+    componentType: "CPU",
     id: 8,
     name: "Intel Core i7-14700K",
     brand: "Intel",
@@ -122,6 +130,7 @@ export const cpus: CPU[] = [
     performanceScore: 94,
   },
   {
+    componentType: "CPU",
     id: 9,
     name: "Intel Core i9-14900K",
     brand: "Intel",
@@ -137,6 +146,7 @@ export const cpus: CPU[] = [
     performanceScore: 98,
   },
   {
+    componentType: "CPU",
     id: 10,
     name: "Intel Core Ultra 7 265K",
     brand: "Intel",

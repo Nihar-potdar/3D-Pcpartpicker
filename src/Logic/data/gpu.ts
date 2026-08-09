@@ -2,6 +2,7 @@ import type { GPU } from "./type";
 
 export const gpus: GPU[] = [
   {
+    componentType: "GPU",
     id: 1,
     name: "NVIDIA GeForce RTX 3060 12GB",
     brand: "NVIDIA",
@@ -14,16 +15,20 @@ export const gpus: GPU[] = [
     performanceScore: 59,
   },
   {
+    componentType: "GPU",
     id: 2,
     name: "NVIDIA GeForce RTX 4060 8GB",
     brand: "NVIDIA",
     image: "/images/gpu/rtx-4060.png",
     price: 299.99,
     chipset: "GeForce RTX 4060",
-    vram: 8, tdp: 115, length: 244,
+    vram: 8,
+    tdp: 115,
+    length: 244,
     performanceScore: 66,
   },
   {
+    componentType: "GPU",
     id: 3,
     name: "NVIDIA GeForce RTX 4070 SUPER 12GB",
     brand: "NVIDIA",
@@ -36,6 +41,7 @@ export const gpus: GPU[] = [
     performanceScore: 84,
   },
   {
+    componentType: "GPU",
     id: 4,
     name: "NVIDIA GeForce RTX 4080 SUPER 16GB",
     brand: "NVIDIA",
@@ -48,6 +54,7 @@ export const gpus: GPU[] = [
     performanceScore: 95,
   },
   {
+    componentType: "GPU",
     id: 5,
     name: "NVIDIA GeForce RTX 4090 24GB",
     brand: "NVIDIA",
@@ -60,6 +67,7 @@ export const gpus: GPU[] = [
     performanceScore: 100,
   },
   {
+    componentType: "GPU",
     id: 6,
     name: "AMD Radeon RX 6600 8GB",
     brand: "AMD",
@@ -72,6 +80,7 @@ export const gpus: GPU[] = [
     performanceScore: 52,
   },
   {
+    componentType: "GPU",
     id: 7,
     name: "AMD Radeon RX 7600 8GB",
     brand: "AMD",
@@ -84,6 +93,7 @@ export const gpus: GPU[] = [
     performanceScore: 63,
   },
   {
+    componentType: "GPU",
     id: 8,
     name: "AMD Radeon RX 7800 XT 16GB",
     brand: "AMD",
@@ -96,16 +106,20 @@ export const gpus: GPU[] = [
     performanceScore: 81,
   },
   {
+    componentType: "GPU",
     id: 9,
     name: "AMD Radeon RX 7900 GRE 16GB",
     brand: "AMD",
     image: "/images/gpu/rx-7900-gre.png",
     price: 549.99,
-    chipset: "Radeon RX 7900 GRE", vram: 16, tdp: 260,
+    chipset: "Radeon RX 7900 GRE",
+    vram: 16,
+    tdp: 260,
     length: 269,
     performanceScore: 85,
   },
   {
+    componentType: "GPU",
     id: 10,
     name: "AMD Radeon RX 7900 XTX 24GB",
     brand: "AMD",

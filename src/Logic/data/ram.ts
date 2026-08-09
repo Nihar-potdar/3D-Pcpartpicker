@@ -2,6 +2,7 @@ import type { RAM } from "./type";
 
 export const ramKits: RAM[] = [
   {
+    componentType: "RAM",
     id: 1,
     name: "Corsair Vengeance LPX 16GB DDR4-3200",
     brand: "Corsair",
@@ -14,6 +15,7 @@ export const ramKits: RAM[] = [
     rgb: false,
   },
   {
+    componentType: "RAM",
     id: 2,
     name: "G.Skill Ripjaws V 32GB DDR4-3600",
     brand: "G.Skill",
@@ -26,6 +28,7 @@ export const ramKits: RAM[] = [
     rgb: false,
   },
   {
+    componentType: "RAM",
     id: 3,
     name: "Kingston Fury Beast RGB 32GB DDR4-3200",
     brand: "Kingston",
@@ -38,6 +41,7 @@ export const ramKits: RAM[] = [
     rgb: true,
   },
   {
+    componentType: "RAM",
     id: 4,
     name: "TeamGroup T-Force Vulcan Z 16GB DDR4-3200",
     brand: "TeamGroup",
@@ -50,6 +54,7 @@ export const ramKits: RAM[] = [
     rgb: false,
   },
   {
+    componentType: "RAM",
     id: 5,
     name: "Corsair Vengeance RGB Pro 64GB DDR4-3600",
     brand: "Corsair",
@@ -62,6 +67,7 @@ export const ramKits: RAM[] = [
     rgb: true,
   },
   {
+    componentType: "RAM",
     id: 6,
     name: "G.Skill Flare X5 32GB DDR5-6000",
     brand: "G.Skill",
@@ -74,6 +80,7 @@ export const ramKits: RAM[] = [
     rgb: false,
   },
   {
+    componentType: "RAM",
     id: 7,
     name: "Corsair Vengeance 32GB DDR5-6000",
     brand: "Corsair",
@@ -86,6 +93,7 @@ export const ramKits: RAM[] = [
     rgb: false,
   },
   {
+    componentType: "RAM",
     id: 8,
     name: "Kingston Fury Beast RGB 32GB DDR5-6000",
     brand: "Kingston",
@@ -98,6 +106,7 @@ export const ramKits: RAM[] = [
     rgb: true,
   },
   {
+    componentType: "RAM",
     id: 9,
     name: "TeamGroup T-Force Delta RGB 48GB DDR5-7200",
     brand: "TeamGroup",
@@ -110,6 +119,7 @@ export const ramKits: RAM[] = [
     rgb: true,
   },
   {
+    componentType: "RAM",
     id: 10,
     name: "G.Skill Trident Z5 RGB 64GB DDR5-6400",
     brand: "G.Skill",

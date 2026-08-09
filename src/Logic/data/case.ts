@@ -2,6 +2,7 @@ import type { CASE } from "./type";
 
 export const cases: CASE[] = [
   {
+    componentType: "Case",
     id: 1,
     name: "NZXT H5 Flow",
     brand: "NZXT",
@@ -16,6 +17,7 @@ export const cases: CASE[] = [
     temperedGlass: true,
   },
   {
+    componentType: "Case",
     id: 2,
     name: "NZXT H6 Flow RGB",
     brand: "NZXT",
@@ -30,6 +32,7 @@ export const cases: CASE[] = [
     temperedGlass: true,
   },
   {
+    componentType: "Case",
     id: 3,
     name: "Corsair 4000D Airflow",
     brand: "Corsair",
@@ -44,6 +47,7 @@ export const cases: CASE[] = [
     temperedGlass: true,
   },
   {
+    componentType: "Case",
     id: 4,
     name: "Corsair iCUE 5000X RGB",
     brand: "Corsair",
@@ -58,6 +62,7 @@ export const cases: CASE[] = [
     temperedGlass: true,
   },
   {
+    componentType: "Case",
     id: 5,
     name: "Lian Li LANCOOL 216",
     brand: "Lian Li",
@@ -72,6 +77,7 @@ export const cases: CASE[] = [
     temperedGlass: true,
   },
   {
+    componentType: "Case",
     id: 6,
     name: "Fractal Design North",
     brand: "Fractal Design",
@@ -86,6 +92,7 @@ export const cases: CASE[] = [
     temperedGlass: true,
   },
   {
+    componentType: "Case",
     id: 7,
     name: "Cooler Master NR200P",
     brand: "Cooler Master",
@@ -100,6 +107,7 @@ export const cases: CASE[] = [
     temperedGlass: true,
   },
   {
+    componentType: "Case",
     id: 8,
     name: "Montech AIR 903 MAX",
     brand: "Montech",
@@ -114,6 +122,7 @@ export const cases: CASE[] = [
     temperedGlass: true,
   },
   {
+    componentType: "Case",
     id: 9,
     name: "DeepCool CH370",
     brand: "DeepCool",
@@ -128,6 +137,7 @@ export const cases: CASE[] = [
     temperedGlass: true,
   },
   {
+    componentType: "Case",
     id: 10,
     name: "HYTE Y60",
     brand: "HYTE",

@@ -2,6 +2,7 @@ import type { Motherboard } from "./type";
 
 export const motherboards: Motherboard[] = [
   {
+    componentType: "Motherboard",
     id: 1,
     name: "MSI MAG B550 Tomahawk",
     brand: "MSI",
@@ -14,6 +15,7 @@ export const motherboards: Motherboard[] = [
     wifi: false,
   },
   {
+    componentType: "Motherboard",
     id: 2,
     name: "ASUS TUF Gaming B550M-Plus WiFi II",
     brand: "ASUS",
@@ -26,6 +28,7 @@ export const motherboards: Motherboard[] = [
     wifi: true,
   },
   {
+    componentType: "Motherboard",
     id: 3,
     name: "ASUS TUF Gaming B650-Plus WiFi",
     brand: "ASUS",
@@ -38,6 +41,7 @@ export const motherboards: Motherboard[] = [
     wifi: true,
   },
   {
+    componentType: "Motherboard",
     id: 4,
     name: "Gigabyte B650M DS3H",
     brand: "Gigabyte",
@@ -50,6 +54,7 @@ export const motherboards: Motherboard[] = [
     wifi: false,
   },
   {
+    componentType: "Motherboard",
     id: 5,
     name: "ASRock X670E Steel Legend",
     brand: "ASRock",
@@ -62,6 +67,7 @@ export const motherboards: Motherboard[] = [
     wifi: true,
   },
   {
+    componentType: "Motherboard",
     id: 6,
     name: "MSI PRO Z690-A DDR4",
     brand: "MSI",
@@ -74,6 +80,7 @@ export const motherboards: Motherboard[] = [
     wifi: false,
   },
   {
+    componentType: "Motherboard",
     id: 7,
     name: "ASUS TUF Gaming Z790-Plus WiFi",
     brand: "ASUS",
@@ -86,6 +93,7 @@ export const motherboards: Motherboard[] = [
     wifi: true,
   },
   {
+    componentType: "Motherboard",
     id: 8,
     name: "Gigabyte B760M DS3H DDR4",
     brand: "Gigabyte",
@@ -98,6 +106,7 @@ export const motherboards: Motherboard[] = [
     wifi: false,
   },
   {
+    componentType: "Motherboard",
     id: 9,
     name: "ASRock B760M-ITX WiFi",
     brand: "ASRock",
@@ -110,6 +119,7 @@ export const motherboards: Motherboard[] = [
     wifi: true,
   },
   {
+    componentType: "Motherboard",
     id: 10,
     name: "MSI MAG Z890 Tomahawk WiFi",
     brand: "MSI",

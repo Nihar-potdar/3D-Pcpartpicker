@@ -1,4 +1,5 @@
 export type CPU = {
+  componentType: "CPU";
   id: number;
   name: string;
   brand: "AMD" | "Intel";
@@ -15,6 +16,7 @@ export type CPU = {
 };
 
 export type GPU = {
+  componentType: "GPU";
   id: number;
   name: string;
   brand: "NVIDIA" | "AMD";
@@ -28,6 +30,7 @@ export type GPU = {
 };
 
 export type RAM = {
+  componentType: "RAM";
   id: number;
   name: string;
   brand: string;
@@ -41,6 +44,7 @@ export type RAM = {
 };
 
 export type Motherboard = {
+  componentType: "Motherboard";
   id: number;
   name: string;
   brand: string;
@@ -54,6 +58,7 @@ export type Motherboard = {
 };
 
 export type STORAGE = {
+  componentType: "Storage";
   id: number;
   name: string;
   brand: string;
@@ -65,19 +70,19 @@ export type STORAGE = {
 };
 
 export type CASE = {
+  componentType: "Case";
   id: number;
   name: string;
   brand: string;
   image: string;
   price: number;
-
   formFactor: "ATX" | "Micro ATX" | "Mini ITX";
-
   maxGpuLength: number; // mm
   maxCoolerHeight: number; // mm
-  radiatorSupport: string; // "240mm", "360mm"
+  radiatorSupport: string; // e.g. "240mm", "360mm"
   color: string;
   rgb: boolean;
-
   temperedGlass: boolean;
-};  
+};
+
+export type ComponentType = "CPU" | "RAM" | "GPU" | "Motherboard" | "Case";
