@@ -9,7 +9,7 @@ export function compatibilityEngine(selectedComponent: {
 }) {
   const rule = RULES[selectedComponent.componentType];
 
-  const results = rule.target.map((targetComponent: any) => {
+  return rule.target.map((targetComponent: any) => {
     const isCompatible = rule.check(selectedComponent, targetComponent);
     return {
       selectedComponent: selectedComponent.name,
@@ -17,8 +17,6 @@ export function compatibilityEngine(selectedComponent: {
       isCompatible: isCompatible,
     };
   });
-  return results;
-
 
   // this was the old implementation of the compatibility engine, which was replaced by the new one above. The old implementation was more verbose and less efficient, as it had separate logic for each component type. The new implementation uses a more generic approach, which makes it easier to maintain and extend in the future.
 

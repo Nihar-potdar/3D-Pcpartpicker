@@ -5,6 +5,8 @@ import { cpus } from "@/Logic/data/cpu";
 import { motherboards } from "@/Logic/data/motherboard";
 import { ramKits } from "@/Logic/data/ram";
 import { compatibilityEngine } from "@/Logic/Compatibility";
+import { gpus } from "../../Logic/data/gpu";
+import { cases } from "../../Logic/data/case";
 
 export default function CompatibilityTester() {
   const [componentType, setComponentType] = useState("CPU");
@@ -15,6 +17,8 @@ export default function CompatibilityTester() {
     CPU: cpus,
     Motherboard: motherboards,
     RAM: ramKits,
+    GPU: gpus,
+    Case: cases,
   };
 
   const selectedComponents =
@@ -46,6 +50,8 @@ export default function CompatibilityTester() {
         <option value="CPU">CPU</option>
         <option value="Motherboard">Motherboard</option>
         <option value="RAM">RAM</option>
+        <option value="GPU">GPU</option>
+        <option value="Case">Case</option>
       </select>
 
       <select
