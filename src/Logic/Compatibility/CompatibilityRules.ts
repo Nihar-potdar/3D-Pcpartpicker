@@ -1,9 +1,9 @@
-import { motherboards } from "./data/motherboard";
-import { ramKits } from "./data/ram";
-import { cases } from "./data/case";
-import { gpus } from "./data/gpu";
-import { CASE, CPU, Motherboard, RAM, GPU } from "./data/type";
-import { ComponentType, CompatibilityRule } from "@/Logic/data/type";
+import { motherboards } from "../../data/motherboard";
+import { ramKits } from "../../data/ram";
+import { cases } from "../../data/case";
+import { gpus } from "../../data/gpu";
+import { CASE, CPU, Motherboard, RAM, GPU } from "../../data/type";
+import { ComponentType, CompatibilityRule } from "../../data/type";
 
 export function compatibilityRules() {
   const motherboardCpuCompatibility: (

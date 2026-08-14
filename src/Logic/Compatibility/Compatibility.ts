@@ -1,7 +1,6 @@
 import { compatibilityRules } from "./CompatibilityRules";
-import { ComponentType } from "@/Logic/data/type";
-import { CompatibilityResult } from "@/Logic/data/type";
-
+import {ComponentType} from "../../data/type";
+import {CompatibilityResult} from "../../data/type";
 const RULES = compatibilityRules();
 
 export function compatibilityEngine(selectedComponent: {
