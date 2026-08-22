@@ -1,0 +1,11 @@
+Model Information:
+* title:	Fractal Design. Meshify C  -  PC Case
+* source:	https://sketchfab.com/3d-models/fractal-design-meshify-c-pc-case-a46526af2ac84fa098edc3f01c012450
+* author:	MUSHROOM_BUILDS (https://sketchfab.com/MUSHROOM_BUILDS)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Fractal Design. Meshify C  -  PC Case" (https://sketchfab.com/3d-models/fractal-design-meshify-c-pc-case-a46526af2ac84fa098edc3f01c012450) by MUSHROOM_BUILDS (https://sketchfab.com/MUSHROOM_BUILDS) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

@@ -1,0 +1,11 @@
+Model Information:
+* title:	Inside a pc
+* source:	https://sketchfab.com/3d-models/inside-a-pc-ef5d85eefc9e40f09e171b6d6746a3de
+* author:	cathalmcd (https://sketchfab.com/cathalmcd)
+
+Model License:
+* license type:	CC-BY-NC-SA-4.0 (http://creativecommons.org/licenses/by-nc-sa/4.0/)
+* requirements:	Author must be credited. No commercial use. Modified versions must have the same license.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Inside a pc" (https://sketchfab.com/3d-models/inside-a-pc-ef5d85eefc9e40f09e171b6d6746a3de) by cathalmcd (https://sketchfab.com/cathalmcd) licensed under CC-BY-NC-SA-4.0 (http://creativecommons.org/licenses/by-nc-sa/4.0/)

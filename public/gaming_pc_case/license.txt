@@ -1,0 +1,11 @@
+Model Information:
+* title:	Gaming pc case
+* source:	https://sketchfab.com/3d-models/gaming-pc-case-5faa051ff3c944d29cde39d11c1c1e5e
+* author:	shig0 (https://sketchfab.com/shig0)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Gaming pc case" (https://sketchfab.com/3d-models/gaming-pc-case-5faa051ff3c944d29cde39d11c1c1e5e) by shig0 (https://sketchfab.com/shig0) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

@@ -11,7 +11,7 @@ import { cases } from "../data/case";
 export default function CompatibilityTester() {
   const [componentType, setComponentType] = useState("CPU");
   const [selectedIndex, setSelectedIndex] = useState("");
-  const [results, setResults] = useState<any[]>([]);
+  const [results, setResults] = useState<unknown[]>([]);
 
   const components = {
     CPU: cpus,
