@@ -1,74 +1,104 @@
-"use client";
-
 import { useState } from "react";
 import { cpus } from "../data/cpu";
 import { motherboards } from "../data/motherboard";
 import { ramKits } from "../data/ram";
-import { compatibilityEngine } from "../Logic/Compatibility/Compatibility";
 import { gpus } from "../data/gpu";
 import { cases } from "../data/case";
+import { storageDevices } from "../data/storage";
+import { validateBuild } from "../Logic/Compatibility/Compatibility";
+import type { CompatibleComponent, CompatibilityResult, ComponentType } from "../data/type";
+
+const componentOptions: Record<ComponentType, CompatibleComponent[]> = {
+  CPU: cpus,
+  Motherboard: motherboards,
+  RAM: ramKits,
+  GPU: gpus,
+  Case: cases,
+  Storage: storageDevices,
+};
+
+const componentTypes: ComponentType[] = ["CPU", "Motherboard", "RAM", "GPU", "Case", "Storage"];
 
 export default function CompatibilityTester() {
-  const [componentType, setComponentType] = useState("CPU");
-  const [selectedIndex, setSelectedIndex] = useState("");
-  const [results, setResults] = useState<unknown[]>([]);
+  const [selectedIds, setSelectedIds] = useState<Partial<Record<ComponentType, string>>>({});
 
-  const components = {
-    CPU: cpus,
-    Motherboard: motherboards,
-    RAM: ramKits,
-    GPU: gpus,
-    Case: cases,
-  };
+  const [results, setResults] = useState<CompatibilityResult[] | null>(null);
 
-  const selectedComponents =
-    components[componentType as keyof typeof components];
+  function handleValidate() {
+    const selectedBuild = componentTypes.flatMap((type) => {
+      const selectedId = selectedIds[type];
 
-  function handleCheck() {
-    if (selectedIndex === "") return;
+      if (!selectedId) return [];
 
-    const selectedComponent = selectedComponents[Number(selectedIndex)];
+      const component = componentOptions[type].find((option) => option.id === Number(selectedId));
 
-    const result = compatibilityEngine(selectedComponent);
+      return component ? [component] : [];
+    });
 
-    setResults(result);
+    setResults(validateBuild(selectedBuild));
   }
 
   return (
-    <div>
-      <h1>Compatibility Engine Tester</h1>
+    <main>
+      <h1>Build Compatibility Tester</h1>
 
-      <select
-        value={componentType}
-        onChange={(e) => {
-          setComponentType(e.target.value);
-          setSelectedIndex("");
-          setResults([]);
-        }}
-      >
-        <option value="CPU">CPU</option>
-        <option value="Motherboard">Motherboard</option>
-        <option value="RAM">RAM</option>
-        <option value="GPU">GPU</option>
-        <option value="Case">Case</option>
-      </select>
+      {componentTypes.map((type) => (
+        <label key={type} style={{ display: "block", marginBottom: 12 }}>
+          {type}:{" "}
+          <select
+            className="rounded-md border border-slate-700 bg-black px-3 py-2 text-white scheme:dark"
+            value={selectedIds[type] ?? ""}
+            onChange={(event) =>
+              setSelectedIds((current) => ({
+                ...current,
+                [type]: event.target.value,
+              }))
+            }
+          >
+            <option value="" className="bg-black text-white">
+              Choose {type}
+            </option>
 
-      <select
-        value={selectedIndex}
-        onChange={(e) => setSelectedIndex(e.target.value)}
-      >
-        <option value="">Choose component</option>
+            {componentOptions[type].map((component) => (
+              <option
+                key={`${type}-${component.id}`}
+                value={component.id}
+                className="bg-black text-white"
+              >
+                {component.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      ))}
 
-        {selectedComponents.map((component, index) => (
-          <option key={index} value={index}>
-            {component.name}
-          </option>
-        ))}
-      </select>
+      <button type="button" onClick={handleValidate}>
+        Validate Build
+      </button>
 
-      <button onClick={handleCheck}>Check Compatibility</button>
+      {results && (
+        <section>
+          <h2>Results</h2>
 
-      <pre>{JSON.stringify(results, null, 2)}</pre>
-    </div>
+          {results.length === 0 ? (
+            <p>Select the parts required for a comparison.</p>
+          ) : (
+            <ul>
+              {results.map((result, index) => (
+                <li
+                  key={`${result.selectedComponent}-${result.targetComponent}-${index}`}
+                  style={{
+                    color: result.isCompatible ? "green" : "red",
+                  }}
+                >
+                  {result.selectedComponent} + {result.targetComponent}:{" "}
+                  {result.isCompatible ? "Compatible" : "Not compatible"}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
+    </main>
   );
 }

@@ -1,22 +1,45 @@
 import { compatibilityRules } from "./CompatibilityRules";
-import type { ComponentType } from "../../data/type";
-import type { CompatibilityResult } from "../../data/type";
+import type { CompatibleComponent, CompatibilityResult, ComponentType } from "../../data/type";
+
+// this is the remove duplicate component validation types. Controls which selected component starts a check.
+const BUILD_VALIDATION_SOURCES: ComponentType[] = ["CPU", "RAM", "GPU", "Storage"];
+
+// importing Rules used in compatibilty engine
 const RULES = compatibilityRules();
 
-export function compatibilityEngine(selectedComponent: {
-  componentType: ComponentType;
-  name: string;
-}): CompatibilityResult[] {
+// Checks one components against every single other component in the database (component compatibility is defined in CompatibliityRules.tsx). can be used when user is choosing componets and for filtering incompatible components
+
+export function compatibilityEngine(
+  selectedComponent: CompatibleComponent,
+  chosenComponents?: CompatibleComponent[]
+): CompatibilityResult[] {
   const rule = RULES[selectedComponent.componentType];
 
-  return rule.target.map((targetComponent: any) => {
+  const targets = chosenComponents
+    ? rule.target.filter((databaseTarget) =>
+        chosenComponents.some(
+          (chosen) =>
+            chosen.componentType === databaseTarget.componentType && chosen.id === databaseTarget.id
+        )
+      )
+    : rule.target;
+
+  return targets.map((targetComponent) => {
     const isCompatible = rule.check(selectedComponent, targetComponent);
     return {
       selectedComponent: selectedComponent.name,
       targetComponent: targetComponent.name,
-      isCompatible: isCompatible,
+      isCompatible,
     };
   });
+}
+
+// Checks the build with the components chosen by the user. should be used when the user has CHOSEN a component. this DEPENDS on the compatibiltyEngine() above.
+
+export function validateBuild(selectedComponent: CompatibleComponent[]): CompatibilityResult[] {
+  return selectedComponent
+    .filter((component) => BUILD_VALIDATION_SOURCES.includes(component.componentType))
+    .flatMap((component) => compatibilityEngine(component, selectedComponent));
 }
 
 // this was the old implementation of the compatibility engine, which was replaced by the new one above. The old implementation was more verbose and less efficient, as it had separate logic for each component type. The new implementation uses a more generic approach, which makes it easier to maintain and extend in the future.

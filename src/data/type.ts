@@ -1,3 +1,13 @@
+// the whole build type... can be used for prebuilds as well as custom build validation
+export type BUILD = {
+  RAM?: RAM;
+  CPU?: CPU;
+  GPU?: GPU;
+  CASE?: CASE;
+  STORAGE?: STORAGE[];
+  MOTHERBOARD?: Motherboard;
+};
+
 export type CPU = {
   componentType: "CPU";
   id: number;
@@ -43,6 +53,9 @@ export type RAM = {
   rgb: boolean;
 };
 
+// Standard Protocol type for motherboard and Storage
+export type StorageProtocol = "NVMe" | "SATA";
+
 export type Motherboard = {
   componentType: "Motherboard";
   id: number;
@@ -55,6 +68,9 @@ export type Motherboard = {
   formFactor: "ATX" | "Micro ATX" | "Mini ITX";
   ramType: "DDR4" | "DDR5";
   wifi: boolean;
+  m2Slots: number;
+  sataPorts: number;
+  supportedM2Protocols: StorageProtocol[];
 };
 
 export type STORAGE = {
@@ -64,9 +80,13 @@ export type STORAGE = {
   brand: string;
   image: string;
   price: number;
-  connecter: string;
-  speed: string;
-  storagetype: string;
+  storageType: "SSD" | "HDD";
+  connector: "M.2" | "SATA";
+  protocol: StorageProtocol;
+  formFactor: "M.2 2280" | "2.5-inch" | "3.5-inch";
+  capacityGB: number;
+  readSpeedMBps: number;
+  writeSpeedMBps: number;
 };
 
 export type CASE = {
@@ -85,7 +105,9 @@ export type CASE = {
   temperedGlass: boolean;
 };
 
-export type ComponentType = "CPU" | "RAM" | "GPU" | "Motherboard" | "Case";
+export type ComponentType = "CPU" | "RAM" | "GPU" | "Motherboard" | "Case" | "Storage";
+
+export type CompatibleComponent = CPU | GPU | RAM | Motherboard | CASE | STORAGE;
 
 export type CompatibilityResult = {
   selectedComponent: string;
@@ -93,7 +115,14 @@ export type CompatibilityResult = {
   isCompatible: boolean;
 };
 
+type CompatibilityCheck = {
+  bivarianceHack(
+    selectedComponent: CompatibleComponent,
+    targetComponent: CompatibleComponent
+  ): boolean;
+}["bivarianceHack"];
+
 export type CompatibilityRule = {
-  check: (selectedComponent: any, targetComponent: any) => boolean;
-  target: any[];
+  check: CompatibilityCheck;
+  target: CompatibleComponent[];
 };
