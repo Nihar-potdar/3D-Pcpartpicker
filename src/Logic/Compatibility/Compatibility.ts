@@ -2,7 +2,7 @@ import { compatibilityRules } from "./CompatibilityRules";
 import type { CompatibleComponent, CompatibilityResult, ComponentType } from "../../data/type";
 
 // this is the remove duplicate component validation types. Controls which selected component starts a check.
-const BUILD_VALIDATION_SOURCES: ComponentType[] = ["CPU", "RAM", "GPU", "Storage"];
+const BUILD_VALIDATION_SOURCES: ComponentType[] = ["CPU", "RAM", "GPU", "Storage", "PSU", "Case"];
 
 // importing Rules used in compatibilty engine
 const RULES = compatibilityRules();
@@ -14,6 +14,8 @@ export function compatibilityEngine(
   chosenComponents?: CompatibleComponent[]
 ): CompatibilityResult[] {
   const rule = RULES[selectedComponent.componentType];
+
+  if (!rule) return [];
 
   const targets = chosenComponents
     ? rule.target.filter((databaseTarget) =>
@@ -37,6 +39,7 @@ export function compatibilityEngine(
 // Checks the build with the components chosen by the user. should be used when the user has CHOSEN a component. this DEPENDS on the compatibiltyEngine() above.
 
 export function validateBuild(selectedComponent: CompatibleComponent[]): CompatibilityResult[] {
+  console.log(selectedComponent);
   return selectedComponent
     .filter((component) => BUILD_VALIDATION_SOURCES.includes(component.componentType))
     .flatMap((component) => compatibilityEngine(component, selectedComponent));

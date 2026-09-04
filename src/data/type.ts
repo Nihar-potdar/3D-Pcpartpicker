@@ -3,6 +3,7 @@ export type BUILD = {
   RAM?: RAM;
   CPU?: CPU;
   GPU?: GPU;
+  PSU?: PSU;
   CASE?: CASE;
   STORAGE?: STORAGE[];
   MOTHERBOARD?: Motherboard;
@@ -37,6 +38,19 @@ export type GPU = {
   tdp: number;
   length: number;
   performanceScore: number;
+};
+
+export type PSU = {
+  componentType: "PSU";
+  id: number;
+  name: string;
+  brand: string;
+  image: string;
+  price: number;
+  wattage: number;
+  efficiencyRating: "80+ Bronze" | "80+ Gold" | "80+ Platinum" | "80+ Titanium";
+  modularity: "Non-Modular" | "Semi-Modular" | "Fully Modular";
+  formFactor: "ATX" | "SFX";
 };
 
 export type RAM = {
@@ -105,9 +119,9 @@ export type CASE = {
   temperedGlass: boolean;
 };
 
-export type ComponentType = "CPU" | "RAM" | "GPU" | "Motherboard" | "Case" | "Storage";
+export type ComponentType = "CPU" | "RAM" | "GPU" | "PSU" | "Motherboard" | "Case" | "Storage";
 
-export type CompatibleComponent = CPU | GPU | RAM | Motherboard | CASE | STORAGE;
+export type CompatibleComponent = CPU | GPU | PSU | RAM | Motherboard | CASE | STORAGE;
 
 export type CompatibilityResult = {
   selectedComponent: string;

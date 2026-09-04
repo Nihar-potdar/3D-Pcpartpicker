@@ -2,7 +2,7 @@ import { motherboards } from "../../data/motherboard";
 import { ramKits } from "../../data/ram";
 import { cases } from "../../data/case";
 import { gpus } from "../../data/gpu";
-import type { CASE, CPU, Motherboard, RAM, GPU, STORAGE } from "../../data/type";
+import type { CASE, CPU, Motherboard, RAM, GPU, STORAGE, PSU } from "../../data/type";
 import type { ComponentType, CompatibilityRule } from "../../data/type";
 
 export function compatibilityRules() {
@@ -43,7 +43,23 @@ export function compatibilityRules() {
     return isStorageCompatible;
   };
 
-  const RULES: Record<ComponentType, CompatibilityRule> = {
+  const calculatePsuHeadroom: (psu: PSU, gpu: GPU) => number = (psu, gpu) => {
+    const headroom = psu.wattage - gpu.tdp;
+    return headroom;
+  };
+
+  const psuCompatibility: (psu: PSU, gpu: GPU) => boolean = (psu, gpu) => {
+    const headroom = calculatePsuHeadroom(psu, gpu);
+    const isCompatible = headroom >= 200;
+
+    return isCompatible;
+  };
+
+  const motherboardCaseCompatibility = (pcCase: CASE, motherboard: Motherboard): boolean => {
+    return pcCase.formFactor === motherboard.formFactor;
+  };
+
+  const RULES: Partial<Record<ComponentType, CompatibilityRule>> = {
     CPU: {
       check: (cpu: CPU, motherboard: Motherboard) => motherboardCpuCompatibility(motherboard, cpu),
       target: motherboards,
@@ -63,15 +79,19 @@ export function compatibilityRules() {
       check: (gpu: GPU, pcCase: CASE) => gpuCaseCompatibility(gpu, pcCase),
       target: cases,
     },
-
-    Case: {
-      check: (pcCase: CASE, gpu: GPU) => gpuCaseCompatibility(gpu, pcCase),
-      target: gpus,
-    },
     Storage: {
       check: (storageDevices: STORAGE, motherboard: Motherboard) =>
         storageCompatibility(storageDevices, motherboard),
       target: motherboards,
+    },
+    PSU: {
+      check: (psu: PSU, gpu: GPU) => psuCompatibility(psu, gpu),
+      target: gpus,
+    },
+    Case: {
+      check: (cases: CASE, motherboard: Motherboard) =>
+        motherboardCaseCompatibility(cases, motherboard),
+      target: cases,
     },
   };
   return RULES;

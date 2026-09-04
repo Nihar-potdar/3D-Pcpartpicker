@@ -7,17 +7,27 @@ import { cases } from "../data/case";
 import { storageDevices } from "../data/storage";
 import { validateBuild } from "../Logic/Compatibility/Compatibility";
 import type { CompatibleComponent, CompatibilityResult, ComponentType } from "../data/type";
+import { psus } from "../data/psu";
 
 const componentOptions: Record<ComponentType, CompatibleComponent[]> = {
   CPU: cpus,
   Motherboard: motherboards,
   RAM: ramKits,
+  PSU: psus,
   GPU: gpus,
   Case: cases,
   Storage: storageDevices,
 };
 
-const componentTypes: ComponentType[] = ["CPU", "Motherboard", "RAM", "GPU", "Case", "Storage"];
+const componentTypes: ComponentType[] = [
+  "CPU",
+  "Motherboard",
+  "RAM",
+  "GPU",
+  "Case",
+  "Storage",
+  "PSU",
+];
 
 export default function CompatibilityTester() {
   const [selectedIds, setSelectedIds] = useState<Partial<Record<ComponentType, string>>>({});
