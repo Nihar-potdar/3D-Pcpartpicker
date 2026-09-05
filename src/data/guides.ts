@@ -8,33 +8,67 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
+/**
+ * A single ordered teaching step inside a guide.
+ * Keeping sections as data allows GuideDetail to number and render them with one
+ * consistent, accessible structure instead of storing JSX inside the dataset.
+ */
 export type GuideSection = {
+  /** Short heading that should make sense when the article is skimmed. */
   title: string;
+  /** Plain-language explanation shown beneath the heading. */
   body: string;
 };
 
+/**
+ * Complete content contract shared by the guide index and detail route.
+ *
+ * Lucide icon constructors are modular UI dependencies, while remote image
+ * fields point to Wikimedia assets and their required attribution pages. No
+ * database or API is queried; this object is the editorial source of truth.
+ */
 export type PcGuide = {
+  /** Stable, human-readable route identifier. */
   slug: string;
+  /** Display order used by field-manual labels. */
   number: string;
   title: string;
   description: string;
+  /** Compact concepts used as scannable tags on the index card. */
   topics: string[];
   duration: string;
   level: string;
+  /** Primary Lucide component rendered by both guide pages. */
   icon: LucideIcon;
+  /** Optional secondary artwork used only when it adds useful card variation. */
   detailIcon?: LucideIcon;
+  /** Lets an important introductory guide occupy more grid space. */
   featured?: boolean;
+  /** Remote educational image; failure does not block the written guide. */
   image: string;
   imageAlt: string;
   imageCredit: string;
+  /** Canonical attribution link for the externally hosted image. */
   imageSource: string;
+  /** One-sentence principle emphasized before the detailed sections. */
   keyIdea: string;
   sections: GuideSection[];
+  /** Pre-build checks rendered as informational list items, not saved tasks. */
   checklist: string[];
+  /** Safety or compatibility mistake given elevated visual priority. */
   warning: string;
 };
 
+/**
+ * Static guide catalog consumed by `Guide` and `GuideDetail`.
+ *
+ * Array order is intentionally the curriculum order and module numbering. The
+ * current scale favors readable local data over a CMS or network dependency;
+ * image ownership remains explicit through credit and source fields.
+ */
 export const guides: PcGuide[] = [
+  // Compatibility comes first because an incompatible foundation invalidates
+  // later performance, power, and assembly decisions.
   {
     slug: "compatibility-first",
     number: "01",
@@ -78,6 +112,8 @@ export const guides: PcGuide[] = [
     warning:
       "Do not assume that matching brand names mean matching parts. Compare the exact model and specification every time.",
   },
+  // Power follows the core platform because wattage decisions require knowing
+  // the major components rather than reading the GPU specification in isolation.
   {
     slug: "power-without-guessing",
     number: "02",
@@ -119,6 +155,8 @@ export const guides: PcGuide[] = [
     warning:
       "Never open a power supply. Internal components can retain dangerous electrical charge even after it is unplugged.",
   },
+  // Airflow combines thermal planning with physical-clearance checks before a
+  // beginner reaches the hands-on assembly sequence.
   {
     slug: "airflow-that-makes-sense",
     number: "03",
@@ -159,6 +197,8 @@ export const guides: PcGuide[] = [
     warning:
       "Do not install every fan as exhaust. With no deliberate intake, the case pulls dusty air through unfiltered gaps.",
   },
+  // Storage explicitly separates connector shape from protocol because that
+  // terminology is a common source of otherwise avoidable buying mistakes.
   {
     slug: "storage-without-confusion",
     number: "04",
@@ -200,6 +240,8 @@ export const guides: PcGuide[] = [
     warning:
       "An M.2 drive fitting into a slot does not guarantee that its SATA or NVMe protocol is supported there.",
   },
+  // Assembly is last: it assumes the reader has already selected compatible,
+  // adequately powered parts that physically fit and can be cooled.
   {
     slug: "first-build-sequence",
     number: "05",

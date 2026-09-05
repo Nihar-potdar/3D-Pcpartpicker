@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowUpRight, Clock3 } from "lucide-react";
+import { ArrowUpRight, Clock3 } from "lucide-react";
 import {
   motion,
   MotionConfig,
@@ -7,7 +7,8 @@ import {
 } from "motion/react";
 import { Link } from "react-router-dom";
 
-import { ThemeToggle } from "@/components/ThemeToggle";
+import { Footer } from "@/components/Footer";
+import { NavBar } from "@/components/NavBar";
 import {
   Card,
   CardBody,
@@ -17,6 +18,9 @@ import {
 import { guides } from "@/data/guides";
 import { cn } from "@/lib/utils";
 
+// Every card reuses one reveal definition so scrolling through the collection
+// feels coherent. The spring settles quickly to keep reading, not animation, as
+// the primary activity on this page.
 const guideReveal: Variants = {
   hidden: { opacity: 0, y: 34 },
   visible: {
@@ -26,61 +30,29 @@ const guideReveal: Variants = {
   },
 };
 
+/**
+ * Renders the guide library from the typed records in `data/guides.ts`.
+ *
+ * Keeping editorial content outside this component lets additional guides be
+ * added without cloning card markup or route behavior. Material-style card
+ * primitives supply structure while Motion adds restrained progressive reveal.
+ *
+ * @returns {JSX.Element} The guide introduction, guide-card grid, and footer.
+ * @throws {Error} Link navigation requires the application Router, and imported
+ * data/rendering failures propagate through React.
+ */
 export function Guide() {
+  // Hover and ambient animation are optional decoration; content and links stay
+  // identical when the operating system requests reduced motion.
   const shouldReduceMotion = useReducedMotion();
 
   return (
     <MotionConfig reducedMotion="user">
       <main className="landing-grid motion-grid relative min-h-dvh overflow-hidden bg-background text-text">
-        <motion.header
-          initial={{ opacity: 0, y: -24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-          className="sticky top-0 z-20 border-b border-border bg-surface/90 backdrop-blur-md"
-        >
-          <div className="mx-auto flex h-16 max-w-[1500px] items-center justify-between px-5 sm:px-10 lg:px-14">
-            <div className="flex items-center gap-4">
-              <motion.div
-                aria-label="Return to home"
-                whileHover={{ rotate: -8, scale: 1.06 }}
-                whileTap={{ scale: 0.9 }}
-              >
-                <Link
-                  to="/"
-                  className="grid size-9 place-items-center border border-border text-muted transition-colors hover:bg-accent-soft hover:text-text"
-                >
-                  <ArrowLeft className="size-4" />
-                </Link>
-              </motion.div>
-              <span className="font-mono text-[10px] tracking-[0.25em] text-muted">
-                RETROFORGE / FIELD MANUAL
-              </span>
-            </div>
+        <NavBar variant="guides" />
 
-            <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.18em] sm:gap-3">
-              <span className="hidden text-muted sm:inline">
-                Knowledge base
-              </span>
-              <motion.span
-                whileHover={{ rotate: 2, scale: 1.04 }}
-                className="bg-accent-soft px-3 py-2 text-accent-dark"
-              >
-                Guides
-                <motion.span
-                  animate={
-                    shouldReduceMotion ? undefined : { opacity: [1, 0.25, 1] }
-                  }
-                  transition={{ duration: 1.6, repeat: Infinity }}
-                >
-                  {" "}
-                  •
-                </motion.span>
-              </motion.span>
-              <ThemeToggle />
-            </div>
-          </div>
-        </motion.header>
-
+        {/* This instrument-like marker connects the page to Home visually but
+            is hidden from screen readers because it conveys no guide content. */}
         <motion.div
           aria-hidden="true"
           animate={shouldReduceMotion ? undefined : { rotate: 360 }}
@@ -91,6 +63,8 @@ export function Guide() {
         </motion.div>
 
         <div className="relative z-10 mx-auto max-w-[1500px] px-5 py-10 sm:px-10 sm:py-14 lg:px-14 lg:py-16">
+          {/* The narrow second column explains the collection without weakening
+              the large editorial headline on wide screens. */}
           <section className="grid gap-10 border-b border-border pb-12 lg:grid-cols-[1fr_22rem] lg:items-end">
             <motion.div
               variants={guideReveal}
@@ -161,11 +135,17 @@ export function Guide() {
             aria-label="PC building guides"
             className="mt-10 grid gap-6 md:grid-cols-2 xl:grid-cols-3"
           >
+            {/* Each typed guide record owns its content, icon, route slug, and
+                featured status; this map owns only the shared presentation. */}
             {guides.map((guide, index) => {
+              // Capitalized local references allow icon constructors stored in
+              // the data file to be rendered as React components.
               const Icon = guide.icon;
               const DetailIcon = guide.detailIcon;
 
               return (
+                // A small index-based delay reveals reading order without a
+                // long sequence that makes later cards feel unresponsive.
                 <motion.div
                   key={guide.number}
                   initial="hidden"
@@ -214,6 +194,8 @@ export function Guide() {
                         className="relative"
                       >
                         {DetailIcon && (
+                          // Optional detail art creates variation while guides
+                          // without a secondary icon keep the exact same layout.
                           <DetailIcon
                             className="absolute -left-14 -top-8 size-16 text-accent/20"
                             strokeWidth={1}
@@ -246,6 +228,8 @@ export function Guide() {
                         className="mt-6 flex flex-wrap gap-2"
                         aria-label={`${guide.title} topics`}
                       >
+                        {/* Topics are semantic list items so assistive technology
+                            receives the same quick summary as sighted readers. */}
                         {guide.topics.map((topic) => (
                           <motion.li
                             key={topic}
@@ -259,6 +243,8 @@ export function Guide() {
                     </CardBody>
 
                     <CardFooter className="p-0">
+                      {/* Slug-based URLs are stable and human-readable, unlike an
+                          array index that would change when guides are reordered. */}
                       <Link
                         to={`/guides/${guide.slug}`}
                         className="flex w-full items-center justify-between px-6 py-4 font-text text-sm font-medium transition-colors hover:bg-accent hover:text-white"
@@ -273,16 +259,7 @@ export function Guide() {
             })}
           </section>
 
-          <motion.footer
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-            className="mt-14 flex flex-col gap-3 border-t border-border pt-5 font-mono text-[9px] uppercase tracking-[0.18em] text-muted sm:flex-row sm:items-center sm:justify-between"
-          >
-            <span>RetroForge field manual / Revision 01</span>
-            <span>Read first. Build once.</span>
-          </motion.footer>
+          <Footer variant="guides" />
         </div>
       </main>
     </MotionConfig>

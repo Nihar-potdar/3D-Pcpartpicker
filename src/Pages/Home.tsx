@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowUpRight, Bookmark, GitCompareArrows } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import {
   AnimatePresence,
   motion,
@@ -9,20 +9,22 @@ import {
 } from "motion/react";
 import { useNavigate } from "react-router-dom";
 
-import { ThemeToggle } from "@/components/ThemeToggle";
+import { Footer } from "@/components/Footer";
+import { NavBar } from "@/components/NavBar";
 import { ComponentSidebar } from "@/components/ui/Nav/ComponentSidebar";
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
+// Actions are data rather than repeated JSX so their ordering, labels, and
+// destinations remain one source of truth. `path` is optional on purpose: the
+// unfinished Load Builds action remains visually reviewable without navigating
+// users to a broken  page.
 const quickActions = [
   {
     label: "Start Build",
     description: "Choose parts and check compatibility",
     number: "01",
     primary: true,
+    path: "/build",
   },
   {
     label: "Load Builds",
@@ -37,6 +39,8 @@ const quickActions = [
   },
 ];
 
+// The parent variant only coordinates timing. Child elements opt into the
+// matching reveal variant, producing a readable sequence without manual delays.
 const staggeredReveal: Variants = {
   hidden: {},
   visible: {
@@ -47,6 +51,8 @@ const staggeredReveal: Variants = {
   },
 };
 
+// A shared spring makes separate hero elements feel like one system and avoids
+// slightly different animation physics being copied throughout the page.
 const revealItem: Variants = {
   hidden: { opacity: 0, y: 28 },
   visible: {
@@ -56,78 +62,41 @@ const revealItem: Variants = {
   },
 };
 
+/**
+ * Renders the RetroForge landing page and its top-level navigation choices.
+ *
+ * The sidebar selection on Home is presentation state used to preview the part
+ * categories. Actual product selection belongs to BuildPage, which prevents the
+ * landing screen from becoming a second, conflicting build editor.
+ *
+ * @returns {JSX.Element} The responsive hero, command menu, sidebar, and footer.
+ * @throws {Error} `useNavigate` requires this page to be rendered inside the
+ * application's React Router; routing errors are allowed to surface normally.
+ */
 export function Home() {
+  // CPU provides a deterministic first label even though the sidebar begins
+  // collapsed; no component is silently added to a user's build here.
   const [selectedComponent, setSelectedComponent] = useState("cpu");
   const shouldReduceMotion = useReducedMotion();
   const navigate = useNavigate();
 
   return (
     <MotionConfig reducedMotion="user">
-      <SidebarProvider className="min-h-dvh bg-background text-text">
+      {/* Home starts collapsed to protect the hero composition. The always-
+          visible header trigger still makes the part index discoverable. */}
+      <SidebarProvider defaultOpen={false} className="min-h-dvh bg-background text-text">
         <ComponentSidebar
           selectedComponent={selectedComponent}
           onSelectComponent={setSelectedComponent}
         />
 
         <SidebarInset className="landing-grid motion-grid min-h-dvh overflow-hidden bg-background">
-          <motion.header
-            initial={{ opacity: 0, y: -24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-            className="relative z-20 flex h-16 shrink-0 items-center justify-between border-b border-border bg-surface/90 px-4 backdrop-blur-md sm:px-8"
-          >
-            <div className="flex items-center gap-3">
-              <SidebarTrigger className="rounded-none border border-border md:hidden" />
-              <span className="font-mono text-[10px] tracking-[0.28em] text-muted">
-                RF_OS / 01
-              </span>
-            </div>
-
-            <nav
-              aria-label="Primary navigation"
-              className="flex items-center gap-1 sm:gap-3"
-            >
-              <motion.button
-                whileHover={{ y: -2 }}
-                whileTap={{ scale: 0.96 }}
-                className="nav-link"
-              >
-                <GitCompareArrows className="size-4" />
-                <span className="hidden sm:inline">Compare</span>
-              </motion.button>
-              <motion.button
-                whileHover={{ y: -2 }}
-                whileTap={{ scale: 0.96 }}
-                className="nav-link"
-              >
-                <Bookmark className="size-4" />
-                <span className="hidden sm:inline">Saved</span>
-              </motion.button>
-              <motion.button
-                whileHover={{ y: -2 }}
-                whileTap={{ scale: 0.96 }}
-                className="nav-link nav-link-active"
-              >
-                <span>Build</span>
-                <motion.span
-                  animate={
-                    shouldReduceMotion
-                      ? undefined
-                      : { opacity: [1, 0.3, 1], scale: [1, 1.5, 1] }
-                  }
-                  transition={{
-                    duration: 1.8,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                  }}
-                  className="h-1.5 w-1.5 rounded-full bg-current"
-                />
-              </motion.button>
-              <ThemeToggle />
-            </nav>
-          </motion.header>
+          <NavBar variant="home" />
 
           <div className="relative z-10 flex min-h-0 flex-1 flex-col px-5 py-8 sm:px-10 sm:py-12 lg:px-14 xl:px-20">
+            {/* Oversized initials add depth without communicating information,
+                so they are hidden from assistive technology and large screens
+                are the only devices that pay their layout/animation cost. */}
             <motion.div
               aria-hidden="true"
               animate={
@@ -145,6 +114,8 @@ export function Home() {
               RF
             </motion.div>
 
+            {/* The slow orbiting marker repeats the technical-instrument motif.
+                It is disabled when reduced motion is requested. */}
             <motion.div
               aria-hidden="true"
               animate={shouldReduceMotion ? undefined : { rotate: 360 }}
@@ -154,6 +125,8 @@ export function Home() {
               <span className="absolute left-1/2 top-0 size-3 -translate-x-1/2 -translate-y-1/2 bg-accent" />
             </motion.div>
 
+            {/* One responsive grid keeps the story and command menu connected:
+                stacked on small screens, balanced side-by-side on desktop. */}
             <motion.section
               variants={staggeredReveal}
               initial="hidden"
@@ -182,12 +155,11 @@ export function Home() {
                   variants={staggeredReveal}
                   className="font-display text-[clamp(4rem,11vw,9.5rem)] font-semibold leading-[0.78] tracking-[-0.075em] text-text"
                 >
-                  <motion.span
-                    variants={revealItem}
-                    className="block origin-left"
-                  >
+                  <motion.span variants={revealItem} className="block origin-left">
                     Retro
                   </motion.span>
+                  {/* This title half uses a directional reveal so the brand
+                      lockup feels assembled rather than uniformly faded. */}
                   <motion.span
                     variants={{
                       hidden: { opacity: 0, x: -36, rotate: -2 },
@@ -213,9 +185,8 @@ export function Home() {
                   className="mt-8 grid max-w-2xl gap-5 border-l-2 border-accent pl-5 sm:grid-cols-[1fr_auto] sm:items-end"
                 >
                   <p className="max-w-xl font-text text-base leading-relaxed text-muted sm:text-lg">
-                    Build a machine that fits together before buying a single
-                    part. Pick components, inspect them in 3D, and catch
-                    compatibility problems early.
+                    Build a machine that fits together before buying a single part. Pick components,
+                    inspect them in 3D, and catch compatibility problems early.
                   </p>
                   <span className="whitespace-nowrap font-mono text-[10px] uppercase tracking-[0.18em] text-muted">
                     Status / Ready
@@ -223,6 +194,8 @@ export function Home() {
                 </motion.div>
               </motion.div>
 
+              {/* The menu enters from the opposite side of the hero, reinforcing
+                  the two-column composition without continuous movement. */}
               <motion.div
                 variants={{
                   hidden: { opacity: 0, x: 48, rotate: 1.5 },
@@ -241,11 +214,11 @@ export function Home() {
                     <p className="font-mono text-[9px] tracking-[0.22em] text-muted">
                       COMMAND MENU
                     </p>
-                    <p className="mt-1 font-display text-xl font-medium">
-                      Choose an action
-                    </p>
+                    <p className="mt-1 font-display text-xl font-medium">Choose an action</p>
                   </div>
                   <AnimatePresence mode="wait" initial={false}>
+                    {/* Changing the key tells AnimatePresence this is new status
+                        text, so the previous category exits before the next enters. */}
                     <motion.span
                       key={selectedComponent}
                       initial={{ opacity: 0, y: 8 }}
@@ -260,6 +233,9 @@ export function Home() {
                 </div>
 
                 <div className="p-2">
+                  {/* A missing path deliberately leaves unfinished actions inert.
+                      Only the primary journey receives the filled accent; other
+                      choices remain visible but visually quieter. */}
                   {quickActions.map((action, index) => (
                     <motion.button
                       key={action.label}
@@ -302,18 +278,7 @@ export function Home() {
               </motion.div>
             </motion.section>
 
-            <motion.footer
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.8, duration: 0.5 }}
-              className="grid shrink-0 grid-cols-3 border-t border-border pt-4 font-mono text-[9px] uppercase tracking-[0.18em] text-muted"
-            >
-              <span>Compatibility engine / Active</span>
-              <span className="text-center">
-                Selected / {selectedComponent}
-              </span>
-              <span className="text-right">RetroForge / 2026</span>
-            </motion.footer>
+            <Footer variant="home" selectedComponent={selectedComponent} />
           </div>
         </SidebarInset>
       </SidebarProvider>

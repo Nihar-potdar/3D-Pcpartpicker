@@ -1,6 +1,11 @@
+/* Google Fonts is the only remote styling dependency in this file. Tailwind
+   then compiles the utilities and component classes used throughout the app. */
 @import url("https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Space+Grotesk:wght@300..700&display=swap");
 @import "tailwindcss";
 
+/* Semantic tokens keep page components independent of literal light/dark
+   colors. A component asks for `surface` or `muted`, and the theme decides the
+   appropriate value without duplicating conditional class names in React. */
 @theme {
   --font-display: "Space Grotesk", sans-serif;
   --font-text: "Satoshi", sans-serif;
@@ -23,6 +28,8 @@
   --color-danger: #985f5f;
 }
 
+/* Dark mode overrides only the colors needed to preserve the existing design
+   hierarchy. The class is toggled and persisted by ThemeToggle/main.tsx. */
 .dark {
   color-scheme: dark;
 
@@ -37,6 +44,8 @@
   --color-accent-dark: #b8c5d8;
 }
 
+/* Setting the document background prevents uncovered browser space from
+   flashing a color that disagrees with the active semantic theme. */
 html,
 body {
   background: var(--color-background);
@@ -66,6 +75,8 @@ body {
   @apply text-text font-text;
 }
 
+/* Shared navigation styling lives at the component layer so Home and Build use
+   identical interaction states without repeating long utility strings. */
 @layer components {
   .nav-link {
     @apply flex h-9 items-center gap-2 border border-transparent px-3 font-text text-sm text-muted transition-colors hover:border-border hover:bg-background hover:text-text;
@@ -76,6 +87,8 @@ body {
   }
 }
 
+/* The landing grid is a flat drafting-paper motif. `color-mix` derives faint
+   lines from the existing accent token, avoiding a new theme-only color. */
 .landing-grid {
   background-image:
     linear-gradient(
@@ -87,14 +100,17 @@ body {
       to bottom,
       color-mix(in srgb, var(--color-accent) 8%, transparent) 1px,
       transparent 1px
-    );
+  );
   background-size: 48px 48px;
-}
+} 
 
+/* A very slow drift keeps the background alive without competing with content. */
 .motion-grid {
   animation: grid-drift 22s linear infinite;
 }
 
+/* Guide headers use a denser version of the same grid so cards remain part of
+   the RetroForge system while being distinguishable from full-page surfaces. */
 .guide-card-grid {
   background-image:
     linear-gradient(
@@ -110,6 +126,8 @@ body {
   background-size: 24px 24px;
 }
 
+/* Hard-edged offset shadows support the retro print/technical-manual language;
+   token colors allow them to remain subtle in both themes. */
 .offset-shadow-lg {
   box-shadow: 14px 14px 0 0 var(--color-accent-soft);
 }
@@ -118,6 +136,8 @@ body {
   box-shadow: 8px 8px 0 0 var(--color-accent-soft);
 }
 
+/* One full grid-cell movement loops seamlessly because the end position aligns
+   exactly with the 48px background-size declared above. */
 @keyframes grid-drift {
   from {
     background-position: 0 0;
@@ -128,6 +148,9 @@ body {
   }
 }
 
+/* Reduced-motion users keep the grid itself but lose its continuous movement.
+   This media query also prevents inherited smooth scrolling from reintroducing
+   motion elsewhere in the page. */
 @media (prefers-reduced-motion: reduce) {
   .motion-grid {
     animation: none;
@@ -140,6 +163,8 @@ body {
   }
 }
 
+/* Smaller grid cells preserve the drafting-paper texture on narrow screens
+   where a 48px cell would leave too few visible reference lines. */
 @media (max-width: 640px) {
   .landing-grid {
     background-size: 32px 32px;

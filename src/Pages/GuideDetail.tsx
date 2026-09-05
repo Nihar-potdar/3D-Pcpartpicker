@@ -1,60 +1,43 @@
-import {
-  AlertTriangle,
-  ArrowLeft,
-  Check,
-  Clock3,
-  ExternalLink,
-} from "lucide-react";
+import { AlertTriangle, Check, Clock3, ExternalLink } from "lucide-react";
 import { motion, MotionConfig, useReducedMotion } from "motion/react";
-import { Link, Navigate, useParams } from "react-router-dom";
+import { Navigate, useParams } from "react-router-dom";
 
-import { ThemeToggle } from "@/components/ThemeToggle";
+import { Footer } from "@/components/Footer";
+import { NavBar } from "@/components/NavBar";
 import { guides } from "@/data/guides";
 
+/**
+ * Renders one guide selected by the dynamic `:slug` route parameter.
+ *
+ * The page looks up the same data used by the guide cards, preventing the index
+ * and detail views from developing separate titles, durations, or route IDs.
+ *
+ * @returns {JSX.Element} A complete guide article, or a redirect when no guide
+ * matches the requested slug.
+ * @throws {Error} `useParams` and `Navigate` require a React Router ancestor;
+ * image/network failures are handled by the browser rather than thrown here.
+ */
 export function GuideDetail() {
+  // URL state makes individual guides bookmarkable and refresh-safe.
   const { slug } = useParams();
+  // A linear search is appropriate for the current five-item static collection;
+  // a lookup map would add maintenance overhead without meaningful performance gain.
   const guide = guides.find((item) => item.slug === slug);
   const shouldReduceMotion = useReducedMotion();
 
+  // Unknown or stale links recover to the library instead of rendering a blank
+  // page. `replace` also prevents the invalid URL trapping the browser Back button.
   if (!guide) {
     return <Navigate to="/guides" replace />;
   }
 
+  // React requires a capitalized component reference for the icon stored in data.
   const Icon = guide.icon;
 
   return (
     <MotionConfig reducedMotion="user">
       <main className="landing-grid motion-grid min-h-dvh bg-background text-text">
-        <motion.header
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="sticky top-0 z-30 border-b border-border bg-surface/90 backdrop-blur-md"
-        >
-          <div className="mx-auto flex h-16 max-w-[1180px] items-center justify-between px-5 sm:px-10">
-            <div className="flex items-center gap-4">
-              <Link
-                to="/guides"
-                aria-label="Return to all guides"
-                className="grid size-9 place-items-center border border-border text-muted transition-colors hover:bg-accent-soft hover:text-text"
-              >
-                <ArrowLeft className="size-4" />
-              </Link>
-              <span className="font-mono text-[9px] tracking-[0.2em] text-muted sm:text-[10px] sm:tracking-[0.25em]">
-                FIELD MANUAL / MODULE_{guide.number}
-              </span>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <Link
-                to="/"
-                className="hidden font-mono text-[9px] uppercase tracking-[0.16em] text-muted transition-colors hover:text-text sm:block"
-              >
-                Home
-              </Link>
-              <ThemeToggle />
-            </div>
-          </div>
-        </motion.header>
+        <NavBar variant="guide-detail" moduleNumber={guide.number} />
 
         <article className="mx-auto max-w-[1180px] px-5 py-10 sm:px-10 sm:py-14">
           <motion.div
@@ -100,6 +83,8 @@ export function GuideDetail() {
             transition={{ delay: 0.15, duration: 0.55 }}
             className="offset-shadow-lg mt-10 border border-border bg-surface p-2"
           >
+            {/* Images come from Wikimedia rather than the application database.
+                Alt text carries meaning if the remote asset cannot be perceived. */}
             <img
               src={guide.image}
               alt={guide.imageAlt}
@@ -107,6 +92,8 @@ export function GuideDetail() {
             />
             <figcaption className="flex flex-col gap-1 px-3 py-3 font-mono text-[9px] uppercase tracking-[0.14em] text-muted sm:flex-row sm:items-center sm:justify-between">
               <span>{guide.imageAlt}</span>
+              {/* Credit links open the canonical source in a new tab. The rel
+                  value prevents that external page from controlling this tab. */}
               <a
                 href={guide.imageSource}
                 target="_blank"
@@ -131,6 +118,8 @@ export function GuideDetail() {
               </div>
 
               <div className="mt-10 space-y-10">
+                {/* Source order is the lesson order. Display numbering is derived
+                    here so editors never have to keep a second number in sync. */}
                 {guide.sections.map((section, index) => (
                   <motion.section
                     key={section.title}
@@ -163,6 +152,8 @@ export function GuideDetail() {
                 Quick check
               </h2>
               <ul className="mt-5 space-y-4">
+                {/* Checklist data is informational, not interactive form state;
+                    check icons therefore reinforce rather than accept input. */}
                 {guide.checklist.map((item) => (
                   <li
                     key={item}
@@ -178,6 +169,8 @@ export function GuideDetail() {
             </aside>
           </section>
 
+          {/* Safety guidance is separated from normal lesson content so users
+              can scan for the highest-risk mistake before beginning a build. */}
           <section className="mt-12 flex gap-4 border-l-4 border-warning bg-surface p-5 sm:p-6">
             <AlertTriangle className="mt-0.5 size-5 shrink-0 text-warning" />
             <div>
@@ -188,12 +181,7 @@ export function GuideDetail() {
             </div>
           </section>
 
-          <footer className="mt-12 flex items-center justify-between border-t border-border pt-5 font-mono text-[9px] uppercase tracking-[0.16em] text-muted">
-            <span>Module_{guide.number} complete</span>
-            <Link to="/guides" className="text-accent-dark hover:underline">
-              View all guides
-            </Link>
-          </footer>
+          <Footer variant="guide-detail" moduleNumber={guide.number} />
         </article>
       </main>
     </MotionConfig>
