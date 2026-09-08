@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
   Box,
   ChevronRight,
@@ -35,6 +34,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "../sidebar";
+import { useSidebarStore } from "@/stores/expandedCategory";
 
 /** Normalized view of differently typed product arrays for sidebar rendering. */
 type ComponentGroup = {
@@ -100,9 +100,11 @@ export function ComponentSidebar({
 }: ComponentSidebarProps) {
   // Expansion is intentionally local UI state: changing which accordion is open
   // should not pollute the application build state or URL.
-  const [expandedComponent, setExpandedComponent] = useState<string | null>(
-    showCatalog ? selectedComponent : null,
-  );
+
+  const expandedCategory = useSidebarStore(
+    state => state.expandedCategory
+  )
+  const toggleCategory = useSidebarStore(state => state.toggleCategory)
 
   /**
    * Reports the active category and, when enabled, toggles its product list.
@@ -119,9 +121,7 @@ export function ComponentSidebar({
     if (showCatalog) {
       // A single active group reduces sidebar height and makes closing an open
       // group possible by clicking its heading again.
-      setExpandedComponent((current) =>
-        current === componentId ? null : componentId,
-      );
+      toggleCategory(componentId)
     }
   }
 
@@ -142,7 +142,7 @@ export function ComponentSidebar({
               // React can render the icon stored in data as JSX.
               const Icon = component.icon;
               const active = selectedComponent === component.id;
-              const expanded = expandedComponent === component.id;
+              const expanded = expandedCategory === component.id
 
               return (
                 <SidebarMenuItem key={component.id}>

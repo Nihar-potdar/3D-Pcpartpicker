@@ -5,7 +5,7 @@ export type BUILD = {
   GPU?: GPU;
   PSU?: PSU;
   CASE?: CASE;
-  STORAGE?: STORAGE[];
+  STORAGE: InstalledDrive[];
   MOTHERBOARD?: Motherboard;
 };
 
@@ -140,3 +140,10 @@ export type CompatibilityRule = {
   check: CompatibilityCheck;
   target: CompatibleComponent[];
 };
+
+export type InstalledDrive = {
+  instanceId : string;
+  product: STORAGE;
+}
+
+export type Category =  "GPU" | "CPU" | "RAM" | "PSU" | "CASE" | "MOTHERBOARD"

@@ -1,5 +1,6 @@
 import { lazy, Suspense } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { Toaster } from "sonner";
 
 // Route-level lazy loading keeps the Three.js build workspace out of the much
 // lighter Home and Guides bundles. This matters because WebGL dependencies are
@@ -52,6 +53,7 @@ function PageLoader() {
 export function App() {
   return (
     <BrowserRouter>
+      <Toaster />
       <Suspense fallback={<PageLoader />}>
         <Routes>
           {/* Keep the primary user journey on short, predictable URLs. */}

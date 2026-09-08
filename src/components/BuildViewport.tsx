@@ -1,13 +1,15 @@
 import { Float, Grid, OrbitControls } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-
-import type { CompatibleComponent } from "@/data/type";
+import type { BUILD, CompatibleComponent } from "@/data/type";
 
 /** Data supplied by the Build page to keep Three.js independent of routing. */
 type BuildViewportProps = {
   selectedCategory: string;
   selectedPart: CompatibleComponent | null;
+  build: BUILD;
+  onRemoveDrive: (targetid: string) => void;
+  onRemovePart: (targetid: string) => void;
 };
 
 /**
@@ -103,10 +105,25 @@ function CaseBlueprint({ reduceMotion }: { reduceMotion: boolean }) {
 export function BuildViewport({
   selectedCategory,
   selectedPart,
+  build,
+  onRemoveDrive,
+  onRemovePart,
 }: BuildViewportProps) {
   // The OS/browser accessibility preference controls the purely decorative
   // idle movement; manual orbit and zoom remain available for exploration.
   const shouldReduceMotion = useReducedMotion();
+  const partsSubtotal =
+    (build.CPU?.price ?? 0) +
+    (build.GPU?.price ?? 0) +
+    (build.RAM?.price ?? 0) +
+    (build.MOTHERBOARD?.price ?? 0) +
+    (build.PSU?.price ?? 0) +
+    (build.CASE?.price ?? 0);
+  const storageSubtotal = build.STORAGE.reduce(
+    (total, drive) => total + drive.product.price,
+    0,
+  );
+  const totalPrice = partsSubtotal + storageSubtotal;
 
   return (
     <section className="relative min-h-0 flex-1 overflow-hidden border border-border bg-surface">
@@ -213,6 +230,120 @@ export function BuildViewport({
           </motion.div>
         </AnimatePresence>
       </div>
+      <aside className="absolute right-5 top-5 w-64 border border-border bg-surface/95 p-4 text-text">
+        <h2 className="text-sm font-medium">Your Build</h2>
+
+        <div className="mt-4 border-t border-border pt-3">
+          <p className="text-xs text-muted">CPU</p>
+          <p className="mt-1 break-words text-sm">
+            {build.CPU?.name ?? "No CPU selected"}
+            {build.CPU && (
+              <button
+                className="bg-accent p-1 border-border text-text border"
+                onClick={() => onRemovePart("CPU")}
+              >
+                Remove
+              </button>
+            )}
+          </p>
+        </div>
+        <div className="mt-4 border-t border-border pt-3">
+          <p className="text-xs text-muted">GPU</p>
+          <p className="mt-1 break-words text-sm">
+            {build.GPU?.name ?? "No GPU selected"}
+            {build.GPU && (
+              <button
+                className="bg-accent p-1 border-border text-text border"
+                onClick={() => onRemovePart("GPU")}
+              >
+                Remove
+              </button>
+            )}
+          </p>
+        </div>
+        <div className="mt-4 border-t border-border pt-3">
+          <p className="text-xs text-muted">MOTHERBOARD</p>
+          <p className="mt-1 break-words text-sm">
+            {build.MOTHERBOARD?.name ?? "No MOTHERBOARD selected"}
+            {build.MOTHERBOARD && (
+              <button
+                className="bg-accent p-1 border-border text-text border"
+                onClick={() => onRemovePart("MOTHERBOARD")}
+              >
+                Remove
+              </button>
+            )}
+          </p>
+        </div>
+        <div className="mt-4 border-t border-border pt-3">
+          <p className="text-xs text-muted">RAM</p>
+          <p className="mt-1 break-words text-sm">
+            {build.RAM?.name ?? "No RAM selected"}
+            {build.RAM && (
+              <button
+                className="bg-accent p-1 border-border text-text border"
+                onClick={() => onRemovePart("RAM")}
+              >
+                Remove
+              </button>
+            )}
+          </p>
+        </div>
+        <div className="mt-4 border-t border-border pt-3">
+          <p className="text-xs text-muted">PSU</p>
+          <p className="mt-1 break-words text-sm">
+            {build.PSU?.name ?? "No PSU selected"}
+            {build.PSU && (
+              <button
+                className="bg-accent p-1 border-border text-text border"
+                onClick={() => onRemovePart("PSU")}
+              >
+                Remove
+              </button>
+            )}
+          </p>
+        </div>
+        <div className="mt-4 border-t border-border pt-3">
+          <p className="text-xs text-muted">CASE</p>
+          <p className="mt-1 break-words text-sm">
+            {build.CASE?.name ?? "No CASE selected"}
+            {build.CASE && (
+              <button
+                className="bg-accent p-1 border-border text-text border"
+                onClick={() => onRemovePart("CASE")}
+              >
+                Remove
+              </button>
+            )}
+          </p>
+        </div>
+        <div className="mt-4 border-t border-border pt-3">
+          <p className="text-xs text-muted">STORAGE</p>
+          <div className="mt-1 break-words text-sm">
+            {build.STORAGE.length === 0 ? (
+              <p>No Storage Selected</p>
+            ) : (
+              build.STORAGE.map((drive) => (
+                <div key={drive.instanceId}>
+                  <p>{drive.product.name}</p>
+                  <button
+                    className="bg-accent p-1 border-border text-text border"
+                    onClick={() => onRemoveDrive(drive.instanceId)}
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+        <div className="mt-4 flex items-center justify-between border-t border-border pt-4">
+          <span className="text-sm text-muted">Total</span>
+          <span className="font-mono text-lg font-semibold text-text">
+            ${totalPrice.toFixed(2)}
+          </span>
+        </div>
+      </aside>
     </section>
   );
 }
