@@ -147,3 +147,9 @@ export type InstalledDrive = {
 }
 
 export type Category =  "GPU" | "CPU" | "RAM" | "PSU" | "CASE" | "MOTHERBOARD"
+
+export type SavedBuild = {
+  id: string;
+  name: string;
+  build: BUILD;
+}
