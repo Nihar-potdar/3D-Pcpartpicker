@@ -170,3 +170,40 @@ body {
     background-size: 32px 32px;
   }
 }
+
+/* Build workspace: consistent controls and a bounded, scrollable parts list. */
+.build-save-controls { display: flex; align-items: flex-end; gap: .5rem; min-width: 0; }
+.build-name-field { display: grid; gap: .375rem; min-width: 0; }
+.build-name-field > span, .saved-build-label { font-family: var(--font-mono); font-size: .625rem; text-transform: uppercase; letter-spacing: .12em; color: var(--color-muted); }
+.build-name-field input { width: 15rem; max-width: 100%; height: 2.5rem; padding: .5rem .75rem; border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text); font-size: .8125rem; }
+.build-name-field input::placeholder { color: var(--color-muted); }
+.build-save-button { height: 2.5rem; padding: .5rem 1rem; flex-shrink: 0; background: var(--color-accent-soft); border: 1px solid var(--color-border); color: var(--color-text); font-size: .8125rem; font-weight: 500; cursor: pointer; }
+.build-save-button:hover { border-color: var(--color-accent); }
+.build-name-field input:focus-visible, .build-save-button:focus-visible, .build-remove-button:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 3px; }
+.saved-build-list { display: flex; align-items: center; gap: .5rem; flex-shrink: 0; overflow-x: auto; padding: .125rem 0 .5rem; }
+.saved-build-label { white-space: nowrap; margin-right: .25rem; }
+.saved-build-name { display: flex; align-items: center; gap: .75rem; flex-shrink: 0; max-width: 18rem; padding: .375rem .5rem .375rem .625rem; border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text); font-size: .75rem; }
+.saved-build-name > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.saved-build-name > button { flex-shrink: 0; padding: .2rem .45rem; border: 1px solid var(--color-border); color: var(--color-muted); font-family: var(--font-mono); font-size: .625rem; text-transform: uppercase; letter-spacing: .08em; cursor: pointer; }
+.saved-build-name > button:hover { border-color: var(--color-accent); color: var(--color-text); }
+.build-summary { position: absolute; right: 1rem; top: 1rem; bottom: 6.5rem; display: flex; flex-direction: column; width: 16rem; max-height: 42rem; border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text); box-shadow: 0 8px 28px rgb(0 0 0 / .08); }
+.build-summary-heading { flex-shrink: 0; padding: 1rem; border-bottom: 1px solid var(--color-border); font-size: .875rem; font-weight: 600; }
+.build-summary-items { min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 0 1rem; scrollbar-width: thin; }
+.build-summary-items > div { margin-top: 0; padding: .875rem 0; border-top: 0; border-bottom: 1px solid var(--color-border); }
+.build-summary-items > div:last-child { border-bottom: 0; }
+.build-summary-items > div > p:first-child { font-family: var(--font-mono); font-size: .625rem; letter-spacing: .1em; }
+.build-summary-items .text-sm { font-size: .8125rem; line-height: 1.5; }
+.build-summary-items .text-sm > div + div { margin-top: .75rem; padding-top: .75rem; border-top: 1px dashed var(--color-border); }
+.build-remove-button { display: block; margin-top: .5rem; padding: .25rem .5rem; border: 1px solid var(--color-border); background: transparent; color: var(--color-muted); font-size: .6875rem; line-height: 1.5; cursor: pointer; transition: color .15s, border-color .15s, background .15s; }
+.build-remove-button:hover { color: var(--color-danger); border-color: var(--color-danger); background: var(--color-background); }
+.build-summary-total { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-shrink: 0; margin-top: auto; padding: 1rem; border-top: 1px solid var(--color-border); }
+@media (max-width: 1100px) { .build-workspace-toolbar > .hidden { display: none; } }
+@media (max-width: 640px) {
+  .build-save-controls { width: 100%; }
+  .build-name-field { flex: 1; }
+  .build-name-field input { width: 100%; }
+  .build-scene { overflow-y: auto; }
+  .build-scene > div:first-child { height: 20rem !important; }
+  .build-scene > .pointer-events-none { height: 20rem; bottom: auto; }
+  .build-summary { position: relative; inset: auto; width: auto; margin: .75rem; max-height: 22rem; }
+}

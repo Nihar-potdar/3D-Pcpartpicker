@@ -126,7 +126,7 @@ export function BuildViewport({
   const totalPrice = partsSubtotal + storageSubtotal;
 
   return (
-    <section className="relative min-h-0 flex-1 overflow-hidden border border-border bg-surface">
+    <section className="build-scene relative min-h-0 flex-1 overflow-hidden border border-border bg-surface">
       {/* The camera begins outside the whole wireframe so users understand the
           object before orbiting it. Pixel density is capped to protect GPU
           performance without making thin lines rough on common displays. */}
@@ -230,8 +230,9 @@ export function BuildViewport({
           </motion.div>
         </AnimatePresence>
       </div>
-      <aside className="absolute right-5 top-5 w-64 border border-border bg-surface/95 p-4 text-text">
-        <h2 className="text-sm font-medium">Your Build</h2>
+      <aside className="build-summary">
+        <h2 className="build-summary-heading">Your build</h2>
+        <div className="build-summary-items">
 
         <div className="mt-4 border-t border-border pt-3">
           <p className="text-xs text-muted">CPU</p>
@@ -239,7 +240,7 @@ export function BuildViewport({
             {build.CPU?.name ?? "No CPU selected"}
             {build.CPU && (
               <button
-                className="bg-accent p-1 border-border text-text border"
+                className="build-remove-button"
                 onClick={() => onRemovePart("CPU")}
               >
                 Remove
@@ -253,7 +254,7 @@ export function BuildViewport({
             {build.GPU?.name ?? "No GPU selected"}
             {build.GPU && (
               <button
-                className="bg-accent p-1 border-border text-text border"
+                className="build-remove-button"
                 onClick={() => onRemovePart("GPU")}
               >
                 Remove
@@ -267,7 +268,7 @@ export function BuildViewport({
             {build.MOTHERBOARD?.name ?? "No MOTHERBOARD selected"}
             {build.MOTHERBOARD && (
               <button
-                className="bg-accent p-1 border-border text-text border"
+                className="build-remove-button"
                 onClick={() => onRemovePart("MOTHERBOARD")}
               >
                 Remove
@@ -281,7 +282,7 @@ export function BuildViewport({
             {build.RAM?.name ?? "No RAM selected"}
             {build.RAM && (
               <button
-                className="bg-accent p-1 border-border text-text border"
+                className="build-remove-button"
                 onClick={() => onRemovePart("RAM")}
               >
                 Remove
@@ -295,7 +296,7 @@ export function BuildViewport({
             {build.PSU?.name ?? "No PSU selected"}
             {build.PSU && (
               <button
-                className="bg-accent p-1 border-border text-text border"
+                className="build-remove-button"
                 onClick={() => onRemovePart("PSU")}
               >
                 Remove
@@ -309,7 +310,7 @@ export function BuildViewport({
             {build.CASE?.name ?? "No CASE selected"}
             {build.CASE && (
               <button
-                className="bg-accent p-1 border-border text-text border"
+                className="build-remove-button"
                 onClick={() => onRemovePart("CASE")}
               >
                 Remove
@@ -327,7 +328,7 @@ export function BuildViewport({
                 <div key={drive.instanceId}>
                   <p>{drive.product.name}</p>
                   <button
-                    className="bg-accent p-1 border-border text-text border"
+                    className="build-remove-button"
                     onClick={() => onRemoveDrive(drive.instanceId)}
                   >
                     Remove
@@ -337,7 +338,8 @@ export function BuildViewport({
             )}
           </div>
         </div>
-        <div className="mt-4 flex items-center justify-between border-t border-border pt-4">
+        </div>
+        <div className="build-summary-total">
           <span className="text-sm text-muted">Total</span>
           <span className="font-mono text-lg font-semibold text-text">
             ${totalPrice.toFixed(2)}

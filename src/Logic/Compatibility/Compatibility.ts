@@ -1,5 +1,5 @@
 import { compatibilityRules } from "./CompatibilityRules";
-import type { CompatibleComponent, CompatibilityResult, ComponentType } from "../../data/type";
+import type { CompatibleComponent, CompatibilityResult, ComponentType, BUILD } from "../../data/type";
 
 // this is the remove duplicate component validation types. Controls which selected component starts a check.
 const BUILD_VALIDATION_SOURCES: ComponentType[] = ["CPU", "RAM", "GPU", "Storage", "PSU", "Case"];
@@ -7,6 +7,28 @@ const BUILD_VALIDATION_SOURCES: ComponentType[] = ["CPU", "RAM", "GPU", "Storage
 // importing Rules used in compatibilty engine
 const RULES = compatibilityRules();
 
+// Adapter.
+
+export function buildToComponents(build: BUILD): CompatibleComponent[]{
+
+  const singleParts: Array<CompatibleComponent | undefined> = [
+    build.CPU,
+    build.GPU,
+    build.RAM,
+    build.PSU,
+    build.CASE,
+    build.MOTHERBOARD,
+  ];
+
+  const selectedParts = singleParts.filter(
+    (part): part is CompatibleComponent => part !== undefined,
+  );
+
+  const storageParts = build.STORAGE.map((drive) => drive.product);
+
+  return [...selectedParts, ...storageParts];
+}
+ 
 // Checks one components against every single other component in the database (component compatibility is defined in CompatibliityRules.tsx). can be used when user is choosing componets and for filtering incompatible components
 
 export function compatibilityEngine(

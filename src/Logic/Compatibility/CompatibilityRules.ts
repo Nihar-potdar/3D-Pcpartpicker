@@ -5,7 +5,17 @@ import { gpus } from "../../data/gpu";
 import type { CASE, CPU, Motherboard, RAM, GPU, STORAGE, PSU } from "../../data/type";
 import type { ComponentType, CompatibilityRule } from "../../data/type";
 
+// motherboard-case form factor hierarchy
+
+const formFactorSize = {
+  "Mini ITX": 1,
+  "Micro ATX": 2,
+  "ATX": 3
+}
+
 export function compatibilityRules() {
+    
+
   const motherboardCpuCompatibility: (motherboard: Motherboard, cpu: CPU) => boolean = (
     motherboard,
     cpu
@@ -56,7 +66,7 @@ export function compatibilityRules() {
   };
 
   const motherboardCaseCompatibility = (pcCase: CASE, motherboard: Motherboard): boolean => {
-    return pcCase.formFactor === motherboard.formFactor;
+    return formFactorSize[pcCase.formFactor] >= formFactorSize[motherboard.formFactor];
   };
 
   const RULES: Partial<Record<ComponentType, CompatibilityRule>> = {
@@ -91,7 +101,7 @@ export function compatibilityRules() {
     Case: {
       check: (cases: CASE, motherboard: Motherboard) =>
         motherboardCaseCompatibility(cases, motherboard),
-      target: cases,
+      target: motherboards,
     },
   };
   return RULES;

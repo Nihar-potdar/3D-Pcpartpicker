@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, MotionConfig } from "motion/react";
 import { toast } from "sonner";
 import { BuildViewport } from "@/components/BuildViewport";
@@ -13,6 +13,12 @@ import type {
   SavedBuild,
 } from "@/data/type";
 import { useSidebarStore } from "@/stores/expandedCategory";
+import { gpuSchema, savedBuildListSchema } from "@/zod/buildSchema";
+import { gpus } from "@/data/gpu";
+import {
+  buildToComponents,
+  validateBuild,
+} from "@/Logic/Compatibility/Compatibility";
 
 // Catalog IDs are deliberately translated at the page boundary. The sidebar
 // can keep stable data-oriented keys while the viewport uses more atmospheric,
@@ -27,6 +33,10 @@ const categoryNames: Record<string, string> = {
   psu: "Power chamber",
   case: "Chassis frame",
 };
+
+// Testing ZOD.
+const result = gpus.every((gpu) => gpuSchema.safeParse(gpu).success);
+console.log(result);
 
 /**
  * Composes the interactive PC-building workspace.
@@ -50,8 +60,27 @@ export function BuildPage() {
   const expandCategory = useSidebarStore((state) => state.openCategory);
 
   // Saved Build State
-  const [savedBuilds, setSavedBuilds] = useState<SavedBuild[]>([]);
+  const [savedBuilds, setSavedBuilds] = useState<SavedBuild[]>(() => {
+    try {
+      const storedSaved = localStorage.getItem("retroforge.savedBuilds");
+
+      if (storedSaved == null) {
+        return [];
+      }
+      const parsed = JSON.parse(storedSaved);
+      const result = savedBuildListSchema.safeParse(parsed);
+      return result.success ? result.data : [];
+    } catch {
+      return [];
+    }
+  });
   const [buildName, setBuildName] = useState("");
+
+  // Local-Storage
+
+  useEffect(() => {
+    localStorage.setItem("retroforge.savedBuilds", JSON.stringify(savedBuilds));
+  }, [savedBuilds]);
 
   // IDs restart inside different data files, so componentType is included to
   // create a collision-free UI key such as "CPU-1" versus "GPU-1".
@@ -75,25 +104,46 @@ export function BuildPage() {
     setPreviewPart(null);
   }
 
+  // helper function
+
+  function installIfCompatible(proposedBuild: BUILD) {
+    const components = buildToComponents(proposedBuild);
+    const results = validateBuild(components);
+    const conflict = results.find((result) => result.isCompatible === false);
+
+    if (conflict) {
+      toast(
+        `${conflict.selectedComponent} is incompatible with ${conflict.targetComponent}.`,
+      );
+      return false;
+    }
+
+    setBuild(proposedBuild);
+    return true;
+  }
+
   function installPart(part: CompatibleComponent) {
     // Sinlge-part caterogies replace their slot while preserving the rest of the build
     if (part.componentType === "CPU") {
-      setBuild((prevBuild) => ({
-        ...prevBuild,
+      const proposedBuild: BUILD = {
+        ...build,
         CPU: part,
-      }));
+      };
+      installIfCompatible(proposedBuild);
     }
     if (part.componentType === "GPU") {
-      setBuild((prevBuild) => ({
-        ...prevBuild,
+      const proposedBuild: BUILD = {
+        ...build,
         GPU: part,
-      }));
+      };
+      installIfCompatible(proposedBuild);
     }
     if (part.componentType === "Case") {
-      setBuild((prevBuild) => ({
-        ...prevBuild,
+      const proposedBuild: BUILD = {
+        ...build,
         CASE: part,
-      }));
+      };
+      installIfCompatible(proposedBuild);
     }
     // TODO: checking installed Drives against the enw motherboard before replacing it
     if (part.componentType === "Motherboard") {
@@ -132,22 +182,25 @@ export function BuildPage() {
         return;
       }
 
-      setBuild((prevBuild) => ({
-        ...prevBuild,
+      const proposedBuild: BUILD = {
+        ...build,
         MOTHERBOARD: part,
-      }));
+      };
+      installIfCompatible(proposedBuild);
     }
     if (part.componentType === "RAM") {
-      setBuild((prevBuild) => ({
-        ...prevBuild,
+      const proposedBuild: BUILD = {
+        ...build,
         RAM: part,
-      }));
+      };
+      installIfCompatible(proposedBuild);
     }
     if (part.componentType === "PSU") {
-      setBuild((prevBuild) => ({
-        ...prevBuild,
+      const proposedBuild: BUILD = {
+        ...build,
         PSU: part,
-      }));
+      };
+      installIfCompatible(proposedBuild);
     }
     // Storage supports multiple installed drives, so valid additions append to a array.
     if (part.componentType === "Storage") {
@@ -195,10 +248,12 @@ export function BuildPage() {
         product: part,
       };
       // Preserve existing parts and append the new installed-drive entry.
-      setBuild((prevBuild) => ({
-        ...prevBuild,
-        STORAGE: [...prevBuild.STORAGE, installedDrive],
-      }));
+      const proposedBuild: BUILD = {
+        ...build,
+        STORAGE: [...build.STORAGE, installedDrive],
+      };
+
+      installIfCompatible(proposedBuild);
     }
   }
 
@@ -227,6 +282,23 @@ export function BuildPage() {
       build: build,
     };
     setSavedBuilds((prevSaves) => [...prevSaves, newSave]);
+    setBuildName("");
+    toast(`Saved ${cleanName}`);
+  }
+
+  function loadBuild(savedBuild: SavedBuild) {
+    const loaded = installIfCompatible(savedBuild.build);
+
+    if (loaded) {
+      setPreviewPart(null);
+      toast(`Loaded ${savedBuild.name}`);
+    }
+  }
+
+  function deleteSavedBuild(targetId: string) {
+    setSavedBuilds((previousSaves) =>
+      previousSaves.filter((save) => save.id !== targetId),
+    );
   }
 
   function removeDrive(targetId: string) {
@@ -268,7 +340,7 @@ export function BuildPage() {
             transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
             className="flex min-h-0 flex-1 flex-col gap-3 p-3 sm:gap-4 sm:p-5"
           >
-            <div className="flex shrink-0 items-center justify-between gap-4 border-b border-border pb-3">
+            <div className="build-workspace-toolbar flex shrink-0 flex-wrap items-center justify-between gap-4 border-b border-border pb-3">
               <div>
                 <p className="font-mono text-[9px] uppercase tracking-[0.22em] text-accent-dark">
                   Build workspace
@@ -277,25 +349,45 @@ export function BuildPage() {
                   Assemble your system.
                 </h1>
               </div>
-              <input
-                className="border-border border p-2 bg-accent-soft text-text"
-                value={buildName}
-                onChange={(event) => setBuildName(event.target.value)}
-              />
-              <button className="bg-accent p-2 text-text" onClick={saveBuild}>
-                Save Build
-              </button>
-              {savedBuilds.map((save)=> (
-              <div key = {save.id}>
-              <p>{save.name}</p>
+              <div className="build-save-controls">
+                <label className="build-name-field">
+                  <span>Build name</span>
+                  <input
+                    placeholder="Name your build"
+                    value={buildName}
+                    onChange={(event) => setBuildName(event.target.value)}
+                  />
+                </label>
+                <button className="build-save-button" onClick={saveBuild}>
+                  Save build
+                </button>
               </div>
-                ))}
 
               <div className="hidden items-center gap-3 font-mono text-[9px] uppercase tracking-[0.16em] text-muted sm:flex">
                 <span className="size-1.5 rounded-full bg-accent" />
                 Viewport ready
               </div>
             </div>
+
+            {savedBuilds.length > 0 && (
+              <div className="saved-build-list">
+                <span className="saved-build-label">Saved builds</span>
+                {savedBuilds.map((save) => (
+                  <div className="saved-build-name" key={save.id}>
+                    <span>{save.name}</span>
+                    <button type="button" onClick={() => loadBuild(save)}>
+                      Load
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => deleteSavedBuild(save.id)}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
 
             <BuildViewport
               selectedCategory={
@@ -306,7 +398,7 @@ export function BuildPage() {
               selectedPart={previewPart}
               build={build}
               onRemoveDrive={removeDrive}
-              onRemovePart={removePart}
+              onRemovePart={(targetId) => removePart(targetId as Category)}
             />
           </motion.div>
         </SidebarInset>
