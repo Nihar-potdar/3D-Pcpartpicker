@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "react";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { HashRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Toaster } from "sonner";
 
 // Route-level lazy loading keeps the Three.js build workspace out of the much
@@ -52,7 +52,7 @@ function PageLoader() {
  */
 export function App() {
   return (
-    <BrowserRouter>
+    <HashRouter>
       <Toaster />
       <Suspense fallback={<PageLoader />}>
         <Routes>
@@ -67,7 +67,7 @@ export function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>
-    </BrowserRouter>
+    </HashRouter>
   );
 }
 
