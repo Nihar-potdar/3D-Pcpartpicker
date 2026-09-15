@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "react";
-import { HashRouter, Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Toaster } from "sonner";
 
 // Route-level lazy loading keeps the Three.js build workspace out of the much
@@ -45,14 +45,13 @@ function PageLoader() {
 
 /**
  * Defines the client-side routing boundary for the RetroForge application.
- *
  * @returns {JSX.Element} The router and whichever page matches the current URL.
  * @throws {Error} React Router can throw if another router is mounted above
  * this component; `App` is therefore intended to be the single router owner.
  */
 export function App() {
   return (
-    <HashRouter>
+    <BrowserRouter>
       <Toaster />
       <Suspense fallback={<PageLoader />}>
         <Routes>
@@ -67,7 +66,7 @@ export function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>
-    </HashRouter>
+    </BrowserRouter>
   );
 }
 

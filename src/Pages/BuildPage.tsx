@@ -13,12 +13,11 @@ import type {
   SavedBuild,
 } from "@/data/type";
 import { useSidebarStore } from "@/stores/expandedCategory";
-import { gpuSchema, savedBuildListSchema } from "@/zod/buildSchema";
-import { gpus } from "@/data/gpu";
 import {
   buildToComponents,
   validateBuild,
 } from "@/Logic/Compatibility/Compatibility";
+import { savedBuildListSchema } from "@/zod/buildSchema";
 
 // Catalog IDs are deliberately translated at the page boundary. The sidebar
 // can keep stable data-oriented keys while the viewport uses more atmospheric,
@@ -33,10 +32,6 @@ const categoryNames: Record<string, string> = {
   psu: "Power chamber",
   case: "Chassis frame",
 };
-
-// Testing ZOD.
-const result = gpus.every((gpu) => gpuSchema.safeParse(gpu).success);
-console.log(result);
 
 /**
  * Composes the interactive PC-building workspace.
@@ -145,7 +140,6 @@ export function BuildPage() {
       };
       installIfCompatible(proposedBuild);
     }
-    // TODO: checking installed Drives against the enw motherboard before replacing it
     if (part.componentType === "Motherboard") {
       // M.2
       const usedM2Slots = build.STORAGE.filter(

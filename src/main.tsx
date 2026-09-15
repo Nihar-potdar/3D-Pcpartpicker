@@ -1,4 +1,3 @@
-import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App.tsx";
@@ -20,7 +19,5 @@ document.documentElement.classList.toggle(
 // a #root element. If that element is removed, createRoot will fail immediately
 // rather than allowing the application to run in a partially mounted state.
 createRoot(document.getElementById("root")!).render(
-  <StrictMode>
     <App />
-  </StrictMode>,
 );
