@@ -1,15 +1,9 @@
-import {
-  Center,
-  Grid,
-  OrbitControls,
-} from "@react-three/drei";
-import { Canvas } from "@react-three/fiber";
+import { Center, Grid, Html, OrbitControls, useProgress } from "@react-three/drei";
+import { Canvas, useThree } from "@react-three/fiber";
 import { AnimatePresence, motion } from "motion/react";
 import type { BUILD, CompatibleComponent } from "@/data/type";
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 import { PcAssembly } from "./PcAssembly";
-
-
 
 type BuildViewportProps = {
   selectedCategory: string;
@@ -18,6 +12,28 @@ type BuildViewportProps = {
   onRemoveDrive: (targetid: string) => void;
   onRemovePart: (targetid: string) => void;
 };
+
+function RendererSettings() {
+  const gl = useThree((state) => state.gl);
+
+  useEffect(() => {
+    gl.toneMappingExposure = 1.4;
+  }, [gl]);
+
+  return null;
+}
+
+function ModelLoader() {
+  const { progress } = useProgress();
+
+  return (
+    <Html center>
+      <div className="font-mono text-xs uppercase tracking-widest text-muted">
+        Loading assmebly {Math.round(progress)}%
+      </div>
+    </Html>
+  )
+}
 
 export function BuildViewport({
   selectedCategory,
@@ -39,20 +55,57 @@ export function BuildViewport({
   );
   const totalPrice = partsSubtotal + storageSubtotal;
 
-
   return (
     <section className="build-scene relative min-h-0 flex-1 overflow-hidden border border-border bg-surface">
       <Canvas
-        camera={{ position: [7.2, 4.8, 8.2], fov: 42 }}
+        shadows
+        camera={{
+          position: [6.5, 3.5, 7.5],
+          fov: 38,
+        }}
         dpr={[1, 1.5]}
-        gl={{ antialias: true, alpha: true }}
-        className="bg-[radial-gradient(circle_at_50%_42%,var(--color-accent-soft),transparent_62%)]"
       >
-        <hemisphereLight intensity={1.5} />
-        <directionalLight position={[6, 7, 6]} intensity={3} />
-        <directionalLight position={[-4, 3, -5]} intensity={2} />
-        {/* Keep GLB loading inside the scene so it cannot suspend the page's
-            entrance animation and leave the workspace at opacity zero. */}
+        <RendererSettings />
+        <ambientLight intensity={0.45} />
+
+        <hemisphereLight intensity={1} color="#ffffff" groundColor="#292d35" />
+
+        <directionalLight
+          castShadow
+          position={[5, 8, 6]}
+          intensity={2.5}
+          shadow-mapSize-width={1024}
+          shadow-mapSize-height={1024}
+          shadow-camera-near={0.5}
+          shadow-camera-far={20}
+          shadow-bias={-0.0005}
+        />
+
+        <directionalLight position={[-4, 4, 4]} intensity={1.2} />
+
+        <directionalLight position={[-1, 5, -6]} intensity={1.2} />
+
+        <pointLight
+          position={[2, 2, 4]}
+          intensity={15}
+          distance={12}
+          decay={2}
+        />
+        <Suspense fallback={<ModelLoader/>}>
+          <Center>
+            <PcAssembly />
+          </Center>
+        </Suspense>
+
+        <mesh
+          rotation={[-Math.PI / 2, 0, 0]}
+          position={[0, -2.29, 0]}
+          receiveShadow
+        >
+          <planeGeometry args={[30, 30]} />
+          <shadowMaterial transparent opacity={0.2} />
+        </mesh>
+
         <Grid
           position={[0, -2.3, 0]}
           args={[32, 32]}
@@ -66,30 +119,15 @@ export function BuildViewport({
           fadeStrength={1.3}
           infiniteGrid
         />
-        <Suspense
-          fallback={
-            <mesh position={[0, 0, 0]}>
-              <boxGeometry args={[1, 1, 1]} />
-              <meshBasicMaterial color="yellow" />
-            </mesh>
-          }
-        >
-          <Center>
-
-
-           <PcAssembly />
-
-
-          </Center>
-        </Suspense>
 
         <OrbitControls
           makeDefault
           enableDamping
           dampingFactor={0.06}
-          minDistance={1}
-          maxDistance={12}
-          target={[0, 0, 0]}
+          minDistance={5}
+          maxDistance={14}
+          maxPolarAngle={Math.PI / 2.05}
+          target={[0, 0.2, 0]}
         />
       </Canvas>
 
