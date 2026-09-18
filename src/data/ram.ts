@@ -11,9 +11,11 @@ export const ramKits: RAM[] = [
     type: "DDR4",
     capacity: 16,
     speed: 3200,
+    casLatency: 16,
     modules: "2 x 8GB",
     rgb: false,
   },
+
   {
     componentType: "RAM",
     id: 2,
@@ -24,9 +26,11 @@ export const ramKits: RAM[] = [
     type: "DDR4",
     capacity: 32,
     speed: 3600,
+    casLatency: 18,
     modules: "2 x 16GB",
     rgb: false,
   },
+
   {
     componentType: "RAM",
     id: 3,
@@ -37,9 +41,11 @@ export const ramKits: RAM[] = [
     type: "DDR4",
     capacity: 32,
     speed: 3200,
+    casLatency: 16,
     modules: "2 x 16GB",
     rgb: true,
   },
+
   {
     componentType: "RAM",
     id: 4,
@@ -50,9 +56,11 @@ export const ramKits: RAM[] = [
     type: "DDR4",
     capacity: 16,
     speed: 3200,
+    casLatency: 16,
     modules: "2 x 8GB",
     rgb: false,
   },
+
   {
     componentType: "RAM",
     id: 5,
@@ -63,9 +71,11 @@ export const ramKits: RAM[] = [
     type: "DDR4",
     capacity: 64,
     speed: 3600,
+    casLatency: 18,
     modules: "2 x 32GB",
     rgb: true,
   },
+
   {
     componentType: "RAM",
     id: 6,
@@ -76,9 +86,11 @@ export const ramKits: RAM[] = [
     type: "DDR5",
     capacity: 32,
     speed: 6000,
+    casLatency: 30,
     modules: "2 x 16GB",
     rgb: false,
   },
+
   {
     componentType: "RAM",
     id: 7,
@@ -89,9 +101,11 @@ export const ramKits: RAM[] = [
     type: "DDR5",
     capacity: 32,
     speed: 6000,
+    casLatency: 30,
     modules: "2 x 16GB",
     rgb: false,
   },
+
   {
     componentType: "RAM",
     id: 8,
@@ -102,9 +116,11 @@ export const ramKits: RAM[] = [
     type: "DDR5",
     capacity: 32,
     speed: 6000,
+    casLatency: 36,
     modules: "2 x 16GB",
     rgb: true,
   },
+
   {
     componentType: "RAM",
     id: 9,
@@ -115,9 +131,11 @@ export const ramKits: RAM[] = [
     type: "DDR5",
     capacity: 48,
     speed: 7200,
+    casLatency: 34,
     modules: "2 x 24GB",
     rgb: true,
   },
+
   {
     componentType: "RAM",
     id: 10,
@@ -128,6 +146,7 @@ export const ramKits: RAM[] = [
     type: "DDR5",
     capacity: 64,
     speed: 6400,
+    casLatency: 32,
     modules: "2 x 32GB",
     rgb: true,
   },

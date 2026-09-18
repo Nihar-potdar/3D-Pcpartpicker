@@ -7,6 +7,11 @@ const BASE = import.meta.env.BASE_URL;
 
 type ModelProps = ThreeElements["group"];
 
+useGLTF.preload(`${BASE}models/nvidia_rtx_2080_ti.glb`);
+useGLTF.preload(`${BASE}/models/corsair_400d.glb`);
+useGLTF.preload(`${BASE}models/psu_power_supply_unit.glb`);
+useGLTF.preload(`${BASE}/models/motherboard__components.glb`);
+
 export function Case(props: ModelProps) {
   const { scene } = useGLTF(`${BASE}models/corsair_400d.glb`);
 
@@ -33,8 +38,7 @@ export function Case(props: ModelProps) {
     });
   }, [scene]);
 
-  useGLTF.preload("/models/corsair_400d.glb");
-
+  
   return (
     <group {...props}>
       <primitive object={scene} scale={10} position={[0, -1.8, 0]} />
@@ -44,7 +48,7 @@ export function Case(props: ModelProps) {
 
 export function Motherboard(props: ModelProps) {
   const { scene } = useGLTF(`${BASE}models/motherboard__components.glb`);
-
+  
   useEffect(() => {
     scene.traverse((child) => {
       if (child instanceof THREE.Mesh) {
@@ -53,9 +57,8 @@ export function Motherboard(props: ModelProps) {
       }
     });
   }, [scene]);
-
-  useGLTF.preload("/models/motherboard__components.glb");
-
+  
+  
   return (
     <group {...props}>
       <Clone object={scene} />
@@ -65,7 +68,7 @@ export function Motherboard(props: ModelProps) {
 
 export function PSU(props: ModelProps) {
   const { scene } = useGLTF(`${BASE}models/psu_power_supply_unit.glb`);
-
+  
   useEffect(() => {
     scene.traverse((child) => {
       if (child instanceof THREE.Mesh) {
@@ -74,9 +77,8 @@ export function PSU(props: ModelProps) {
       }
     });
   }, [scene]);
-
-   useGLTF.preload(`${BASE}models/psu_power_supply_unit.glb`);
-
+  
+  
   return (
     <group {...props}>
       <Clone object={scene} />
@@ -86,7 +88,7 @@ export function PSU(props: ModelProps) {
 
 export function GPUModel(props: ModelProps) {
   const { scene } = useGLTF(`${BASE}models/nvidia_rtx_2080_ti.glb`);
-
+  
   useEffect(() => {
     scene.traverse((child) => {
       if (child instanceof THREE.Mesh) {
@@ -95,12 +97,12 @@ export function GPUModel(props: ModelProps) {
       }
     });
   }, [scene]);
-
-  useGLTF.preload(`${BASE}models/nvidia_rtx_2080_ti.glb`);
-
+  
+  
   return (
     <group {...props}>
       <Clone object={scene} />
     </group>
   );
 }
+

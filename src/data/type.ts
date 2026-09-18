@@ -65,6 +65,7 @@ export type RAM = {
   speed: number;
   modules: string;
   rgb: boolean;
+  casLatency: number;
 };
 
 // Standard Protocol type for motherboard and Storage

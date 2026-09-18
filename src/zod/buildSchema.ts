@@ -53,7 +53,8 @@ componentType: z.literal("RAM"),
   capacity: z.number().positive(),
   speed: z.number().positive(),
   modules: z.string().trim().min(1),
-  rgb: z.boolean()
+  rgb: z.boolean(),
+  casLatency: z.number().positive(),
 })
 
 export const psuSchema = basePartSchema.extend({

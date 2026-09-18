@@ -35,6 +35,8 @@ import {
   SidebarRail,
 } from "../sidebar";
 import { useSidebarStore } from "@/stores/expandedCategory";
+import { getPartHighlights } from "@/lib/getPartHighlights";
+import { specDescriptions } from "@/data/specDescriptions";
 
 /** Normalized view of differently typed product arrays for sidebar rendering. */
 type ComponentGroup = {
@@ -101,10 +103,8 @@ export function ComponentSidebar({
   // Expansion is intentionally local UI state: changing which accordion is open
   // should not pollute the application build state or URL.
 
-  const expandedCategory = useSidebarStore(
-    state => state.expandedCategory
-  )
-  const toggleCategory = useSidebarStore(state => state.toggleCategory)
+  const expandedCategory = useSidebarStore((state) => state.expandedCategory);
+  const toggleCategory = useSidebarStore((state) => state.toggleCategory);
 
   /**
    * Reports the active category and, when enabled, toggles its product list.
@@ -121,7 +121,7 @@ export function ComponentSidebar({
     if (showCatalog) {
       // A single active group reduces sidebar height and makes closing an open
       // group possible by clicking its heading again.
-      toggleCategory(componentId)
+      toggleCategory(componentId);
     }
   }
 
@@ -142,7 +142,7 @@ export function ComponentSidebar({
               // React can render the icon stored in data as JSX.
               const Icon = component.icon;
               const active = selectedComponent === component.id;
-              const expanded = expandedCategory === component.id
+              const expanded = expandedCategory === component.id;
 
               return (
                 <SidebarMenuItem key={component.id}>
@@ -177,13 +177,14 @@ export function ComponentSidebar({
                         }}
                         className="overflow-hidden"
                       >
-                        <div className="ml-4 max-h-72 overflow-y-auto border-l border-border py-1 pl-2">
+                        <div className="py-1 pl-2 ml-4 overflow-y-auto border-l max-h-72 border-border">
                           {component.items.length > 0 ? (
                             component.items.map((part) => {
                               // IDs are unique only inside each catalog file, so
                               // the type is required to avoid React key collisions.
                               const partKey = `${part.componentType}-${part.id}`;
                               const selected = selectedPartKey === partKey;
+                              const highlights = getPartHighlights(part);
 
                               return (
                                 // Optional chaining is required because Home
@@ -192,18 +193,33 @@ export function ComponentSidebar({
                                   key={partKey}
                                   type="button"
                                   onClick={() => onSelectPart?.(part)}
-                                  className={`group/part w-full border-b border-border/60 px-2 py-3 text-left transition-colors last:border-b-0 hover:bg-accent-soft ${
-                                    selected ? "bg-accent-soft" : ""
+                                  className={`group/part w-full border-b border-border/60 px-2 py-3 text-left transition-all last:border-b-0 hover:bg-accent-soft ${
+                                    selected ? "bg-accent-soft border-l-2 border-l-accent" : ""
                                   }`}
                                 >
-                                  <span className="block truncate font-text text-xs font-medium text-text">
+                                  <span className="block text-xs font-medium truncate font-text text-text">
                                     {part.name}
                                   </span>
-                                  <span className="mt-1 flex items-center justify-between gap-2 font-mono text-[9px] uppercase tracking-[0.12em] text-muted">
+                                  <div className="flex flex-wrap gap-1 mt-2">
+                                    {highlights.map((highlight) => (
+                                      <span
+                                        key={highlight.label}
+                                        title={
+                                        specDescriptions[highlight.label] ?? 
+                                        highlight.label
+                                        }
+                                        className=" border border-border  bg-background/60px px-1.5  
+                                        py-0.5 font-mono text-[8px] uppercase tracking-[0.08em] text-muted "
+                                      >
+                                        {highlight.value}
+                                      </span>
+                                    ))}
+                                  </div>
+                                  <span className="mt-2 flex items-center justify-between gap-2 font-mono text-[9px] uppercase tracking-[0.12em] text-muted">
                                     <span>{part.brand}</span>
                                     <span
                                       className={
-                                        selected ? "text-accent-dark" : ""
+                                        selected ? "text-accent-dark" : "text-text"
                                       }
                                     >
                                       ${part.price.toFixed(2)}
