@@ -1,6 +1,6 @@
 import { ArrowLeft, Bookmark, GitCompareArrows } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { SidebarTrigger } from "@/components/ui/sidebar";
@@ -29,6 +29,7 @@ export function NavBar(props: NavBarProps) {
   // Motion's accessibility hook lets decorative movement disappear without
   // maintaining an entirely separate navigation implementation.
   const shouldReduceMotion = useReducedMotion();
+  const navigate = useNavigate();
 
   // Home and Build share the same application-shell controls. Keeping them in
   // one branch prevents their sidebar and theme behaviors from drifting apart.
@@ -38,10 +39,10 @@ export function NavBar(props: NavBarProps) {
         initial={{ opacity: 0, y: -24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-        className="relative z-20 flex h-16 shrink-0 items-center justify-between border-b border-border bg-surface/90 px-4 backdrop-blur-md sm:px-8"
+        className="relative z-20 flex items-center justify-between h-16 px-4 border-b shrink-0 border-border bg-surface/90 backdrop-blur-md sm:px-8"
       >
         <div className="flex items-center gap-3">
-          <SidebarTrigger className="rounded-none border border-border" />
+          <SidebarTrigger className="border rounded-none border-border" />
           <span className="font-mono text-[10px] tracking-[0.28em] text-muted">
             {props.variant === "build" ? "BUILD_OS / 01" : "RF_OS / 01"}
           </span>
@@ -55,10 +56,11 @@ export function NavBar(props: NavBarProps) {
             type="button"
             whileHover={{ y: -2 }}
             whileTap={{ scale: 0.96 }}
+            onClick={() => navigate ("/prebuilts")}
             className="nav-link"
           >
             <GitCompareArrows className="size-4" />
-            <span className="hidden sm:inline">Compare</span>
+            <span className="hidden sm:inline">PreBuilts</span>
           </motion.button>
           <motion.button
             type="button"
@@ -125,7 +127,7 @@ export function NavBar(props: NavBarProps) {
               aria-label={
                 isGuideDetail ? "Return to all guides" : "Return to home"
               }
-              className="grid size-9 place-items-center border border-border text-muted transition-colors hover:bg-accent-soft hover:text-text"
+              className="grid transition-colors border size-9 place-items-center border-border text-muted hover:bg-accent-soft hover:text-text"
             >
               <ArrowLeft className="size-4" />
             </Link>
@@ -153,7 +155,7 @@ export function NavBar(props: NavBarProps) {
               </span>
               <motion.span
                 whileHover={{ rotate: 2, scale: 1.04 }}
-                className="bg-accent-soft px-3 py-2 text-accent-dark"
+                className="px-3 py-2 bg-accent-soft text-accent-dark"
               >
                 Guides
                 {/* This dot is deliberately decorative; the text already

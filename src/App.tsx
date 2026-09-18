@@ -1,10 +1,6 @@
 import { lazy, Suspense } from "react";
 import { HashRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Toaster } from "sonner";
-
-// Route-level lazy loading keeps the Three.js build workspace out of the much
-// lighter Home and Guides bundles. This matters because WebGL dependencies are
-// large and should not delay a visitor who has not opened the builder yet.
 const Home = lazy(() =>
   import("./Pages/Home").then((module) => ({ default: module.Home })),
 );
@@ -23,32 +19,21 @@ const GuideDetail = lazy(() =>
   })),
 );
 
-/**
- * Provides a design-system-consistent fallback while a lazy route is loading.
- *
- * The fallback lives outside individual pages so every route transition has
- * the same behavior and we do not duplicate loading-state markup.
- *
- * @returns {JSX.Element} A full-viewport loading indicator.
- * @remarks This function does not intentionally throw. Lazy-import failures are
- * propagated by React and should eventually be handled by an error boundary.
- */
+const Prebuilts = lazy(() =>
+  import("./Pages/PreBuilts").then((module) => ({
+    default: module.Prebuilts,
+  })),
+);
+
 function PageLoader() {
   return (
-    <div className="landing-grid grid min-h-dvh place-items-center bg-background text-text">
+    <div className="grid landing-grid min-h-dvh place-items-center bg-background text-text">
       <span className="font-mono text-[10px] uppercase tracking-[0.24em] text-muted">
         Loading RetroForge...
       </span>
     </div>
   );
 }
-
-/**
- * Defines the client-side routing boundary for the RetroForge application.
- * @returns {JSX.Element} The router and whichever page matches the current URL.
- * @throws {Error} React Router can throw if another router is mounted above
- * this component; `App` is therefore intended to be the single router owner.
- */
 export function App() {
   return (
     <HashRouter>
@@ -62,6 +47,7 @@ export function App() {
           <Route path="/BuildPage" element={<Navigate to="/build" replace />} />
           <Route path="/guides" element={<Guide />} />
           <Route path="/guides/:slug" element={<GuideDetail />} />
+          <Route path="/prebuilts" element={<Prebuilts />} />
           {/* An unknown path should recover into the app instead of dead-ending. */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

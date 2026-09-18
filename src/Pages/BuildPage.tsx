@@ -19,6 +19,7 @@ import {
 } from "@/Logic/Compatibility/Compatibility";
 import { savedBuildListSchema } from "@/zod/buildSchema";
 import { useBuildStore } from "@/stores/BuildStore";
+import { prebuilts } from "@/data/PreBuilds";
 
 // Catalog IDs are deliberately translated at the page boundary. The sidebar
 // can keep stable data-oriented keys while the viewport uses more atmospheric,
@@ -292,7 +293,7 @@ export function BuildPage() {
     <MotionConfig reducedMotion="user">
       <SidebarProvider
         defaultOpen
-        className="h-dvh min-h-dvh overflow-hidden bg-background text-text"
+        className="overflow-hidden h-dvh min-h-dvh bg-background text-text"
       >
         <ComponentSidebar
           selectedComponent={catalogCategory}
@@ -309,14 +310,14 @@ export function BuildPage() {
             initial={{ opacity: 0, scale: 0.992 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-            className="flex min-h-0 flex-1 flex-col gap-3 p-3 sm:gap-4 sm:p-5"
+            className="flex flex-col flex-1 min-h-0 gap-3 p-3 sm:gap-4 sm:p-5"
           >
-            <div className="build-workspace-toolbar flex shrink-0 flex-wrap items-center justify-between gap-4 border-b border-border pb-3">
+            <div className="flex flex-wrap items-center justify-between gap-4 pb-3 border-b build-workspace-toolbar shrink-0 border-border">
               <div>
                 <p className="font-mono text-[9px] uppercase tracking-[0.22em] text-accent-dark">
                   Build workspace
                 </p>
-                <h1 className="mt-1 font-display text-2xl font-medium tracking-tight text-text sm:text-3xl">
+                <h1 className="mt-1 text-2xl font-medium tracking-tight font-display text-text sm:text-3xl">
                   Assemble your system.
                 </h1>
               </div>
@@ -359,6 +360,20 @@ export function BuildPage() {
                 ))}
               </div>
             )}
+            <button
+              onClick={() => {
+                const prebuilt = prebuilts[0];
+
+                const loaded = installIfCompatible(prebuilt.build);
+
+                if (loaded) {
+                  setPreviewPart(null);
+                  toast(`Loaded ${prebuilt.name}`);
+                }
+              }}
+            >
+              Load Starter Forge
+            </button>
 
             <BuildViewport
               selectedCategory={

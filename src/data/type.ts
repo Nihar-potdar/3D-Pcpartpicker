@@ -154,3 +154,12 @@ export type SavedBuild = {
   name: string;
   build: BUILD;
 }
+
+export type preBuild = {
+    id: string;
+    name: string;
+    description: string;
+    tier: "Starter" | "Balanced" | "High-End" | "Workstation";
+    useCase: string[]
+    build: BUILD
+}
