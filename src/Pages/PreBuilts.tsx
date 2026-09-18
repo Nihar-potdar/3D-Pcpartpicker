@@ -269,7 +269,7 @@ export function Prebuilts() {
         {/* page heading */}
         <div className="max-w-3xl">
           <p className="font-mono text-[9px] uppercase tracking-[0.24em] text-accent-dark">
-            Preconfigured systems / 01
+            Preconfigured systems
           </p>
 
           <h1 className="mt-3 text-4xl font-medium tracking-tight font-display text-text sm:text-5xl lg:text-6xl">

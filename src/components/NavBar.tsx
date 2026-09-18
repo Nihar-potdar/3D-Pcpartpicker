@@ -1,9 +1,8 @@
 import { ArrowLeft, Bookmark, GitCompareArrows } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { SidebarTrigger } from "@/components/ui/sidebar";
 
 /**
  * Restricts navigation variants at compile time.
@@ -29,71 +28,135 @@ export function NavBar(props: NavBarProps) {
   // Motion's accessibility hook lets decorative movement disappear without
   // maintaining an entirely separate navigation implementation.
   const shouldReduceMotion = useReducedMotion();
-  const navigate = useNavigate();
-
   // Home and Build share the same application-shell controls. Keeping them in
   // one branch prevents their sidebar and theme behaviors from drifting apart.
   if (props.variant === "home" || props.variant === "build") {
+    const isBuild = props.variant === "build";
+
     return (
       <motion.header
         initial={{ opacity: 0, y: -24 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+        transition={{
+          duration: 0.55,
+          ease: [0.22, 1, 0.36, 1],
+        }}
         className="relative z-20 flex items-center justify-between h-16 px-4 border-b shrink-0 border-border bg-surface/90 backdrop-blur-md sm:px-8"
       >
+        {/* LEFT SIDE */}
+
         <div className="flex items-center gap-3">
-          <SidebarTrigger className="border rounded-none border-border" />
-          <span className="font-mono text-[10px] tracking-[0.28em] text-muted">
-            {props.variant === "build" ? "BUILD_OS / 01" : "RF_OS / 01"}
-          </span>
+          {isBuild ? (
+            "hi"
+          ) : (
+            <Link
+              to="/"
+              className="
+              grid size-9 place-items-center
+              border border-border
+              font-mono text-[11px] font-semibold
+              text-text
+              transition-colors
+              hover:bg-accent-soft
+            "
+            >
+              RF
+            </Link>
+          )}
+
+          <div className="flex flex-col">
+            <span
+              className="
+              font-mono text-[10px]
+              tracking-[0.22em]
+              text-muted
+            "
+            >
+              {isBuild ? "BUILD_OS" : "RETROFORGE"}
+            </span>
+
+            {isBuild && (
+              <span className="hidden font-text text-[11px] text-muted lg:block">
+                PC configurator
+              </span>
+            )}
+          </div>
         </div>
+
+        {/* RIGHT SIDE */}
 
         <nav
           aria-label="Primary navigation"
-          className="flex items-center gap-1 sm:gap-3"
+          className="flex items-center gap-1 sm:gap-2"
         >
-          <motion.button
-            type="button"
-            whileHover={{ y: -2 }}
-            whileTap={{ scale: 0.96 }}
-            onClick={() => navigate ("/prebuilts")}
-            className="nav-link"
+          {/* PREBUILTS */}
+
+          <Link
+            to="/prebuilts"
+            className="flex items-center gap-2 nav-link"
           >
             <GitCompareArrows className="size-4" />
-            <span className="hidden sm:inline">PreBuilts</span>
-          </motion.button>
+
+            <span className="hidden sm:inline">Prebuilts</span>
+          </Link>
+
+          {/* SAVED BUILDS */}
+
           <motion.button
             type="button"
             whileHover={{ y: -2 }}
             whileTap={{ scale: 0.96 }}
-            className="nav-link"
+            className="flex items-center gap-2 nav-link"
           >
             <Bookmark className="size-4" />
+
             <span className="hidden sm:inline">Saved</span>
           </motion.button>
-          <motion.button
-            type="button"
-            whileHover={{ y: -2 }}
-            whileTap={{ scale: 0.96 }}
-            className="nav-link nav-link-active"
+
+          {/* BUILD */}
+
+          <Link
+            to="/build"
+            className={`
+            nav-link
+            flex items-center gap-2
+
+            ${isBuild ? "nav-link-active" : ""}
+          `}
           >
             <span>Build</span>
-            {/* The pulse is a status accent, not information; reduced-motion
-                users receive the same active styling without repetition. */}
-            <motion.span
-              animate={
-                shouldReduceMotion
-                  ? undefined
-                  : { opacity: [1, 0.3, 1], scale: [1, 1.5, 1] }
-              }
-              transition={{
-                duration: 1.8,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
-              className="h-1.5 w-1.5 rounded-full bg-current"
-            />
-          </motion.button>
+
+            {isBuild && (
+              <motion.span
+                aria-hidden="true"
+                animate={
+                  shouldReduceMotion
+                    ? undefined
+                    : {
+                        opacity: [1, 0.3, 1],
+                        scale: [1, 1.5, 1],
+                      }
+                }
+                transition={{
+                  duration: 1.8,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
+                className="
+                size-1.5
+                rounded-full
+                bg-current
+              "
+              />
+            )}
+          </Link>
+
+          {/* DIVIDER */}
+
+          <div className="w-px h-6 mx-1 bg-border" />
+
+          {/* THEME */}
+
           <ThemeToggle />
         </nav>
       </motion.header>

@@ -31,6 +31,7 @@ type BuildViewportProps = {
   build: BUILD;
   onRemoveDrive: (targetid: string) => void;
   onRemovePart: (targetid: string) => void;
+  mobile?: boolean;
 };
 
 type BuildPartRowProps = {
@@ -54,54 +55,44 @@ function BuildPartRow({
 
   return (
     <div
-      className={`
-        group flex gap-3 border-b border-border px-4 py-4
-        transition-colors
-        ${selected ? "hover:bg-accent-soft/30" : ""}
-      `}
+      className={`group relative flex gap-3 border-b border-border px-4 py-3.5 transition ${
+        selected ? "hover:bg-background/70" : ""
+      }`}
     >
-      {/* ICON */}
+      {selected && (
+        <span className="absolute inset-y-0 left-0 w-[2px] bg-accent" />
+      )}
 
       <div
-        className={`
-          grid size-9 shrink-0 place-items-center border
-          ${
-            selected
-              ? "border-accent/30 bg-accent-soft text-accent-dark"
-              : "border-border bg-background/50 text-muted"
-          }
-        `}
+        className={`grid size-9 shrink-0 place-items-center border ${
+          selected
+            ? "border-accent/40 bg-accent-soft text-accent-dark"
+            : "border-border bg-background/40 text-muted"
+        }`}
       >
-        {selected ? (
-          <Icon className="size-4" />
-        ) : (
-          <Icon className="size-4 opacity-40" />
-        )}
+        <Icon className={`size-4 ${selected ? "" : "opacity-40"}`} />
       </div>
 
-      {/* CONTENT */}
-
       <div className="flex-1 min-w-0">
-        <p className="text-xs font-medium font-text text-muted">{label}</p>
+        <p className="font-mono text-[8px] uppercase tracking-[0.2em] text-muted">
+          {label}
+        </p>
 
         {selected ? (
           <>
-            <p className="mt-1 text-sm font-medium leading-5 font-text text-text">
+            <p className="mt-1 text-sm italic font-bold leading-5 uppercase font-display text-text">
               {name}
             </p>
-
             {price !== undefined && (
-              <p className="mt-1 font-mono text-xs text-muted">
+              <p className="mt-1 font-mono text-[10px] text-accent-dark">
                 ${price.toFixed(2)}
               </p>
             )}
           </>
         ) : (
-          <p className="mt-1 text-sm font-text text-muted">{emptyText}</p>
+          <p className="mt-1 text-xs font-text text-muted">{emptyText}</p>
         )}
       </div>
-
-      {/* REMOVE */}
 
       {selected && onRemove && (
         <button
@@ -109,7 +100,7 @@ function BuildPartRow({
           onClick={onRemove}
           title={`Remove ${label}`}
           aria-label={`Remove ${label}`}
-          className="grid transition-all border border-transparent size-8 shrink-0 place-items-center text-muted opacity-60 hover:border-border hover:bg-background hover:text-text group-hover:opacity-100"
+          className="grid transition border border-transparent opacity-50 size-8 shrink-0 place-items-center text-muted hover:border-danger/40 hover:bg-danger/10 hover:text-danger group-hover:opacity-100"
         >
           <Trash2 className="size-3.5" />
         </button>
@@ -122,7 +113,7 @@ function RendererSettings() {
   const gl = useThree((state) => state.gl);
 
   useEffect(() => {
-    gl.toneMappingExposure = 1.4;
+    gl.toneMappingExposure = 1.5;
   }, [gl]);
 
   return null;
@@ -133,8 +124,13 @@ function ModelLoader() {
 
   return (
     <Html center>
-      <div className="font-mono text-xs tracking-widest uppercase text-muted">
-        Loading assmebly {Math.round(progress)}%
+      <div className="px-5 py-3 border cut-corner border-accent/40 bg-background/90 backdrop-blur-md">
+        <p className="font-mono text-[9px] uppercase tracking-[0.25em] text-accent-dark">
+          Initializing assembly
+        </p>
+        <p className="mt-1 text-xl italic font-bold font-display text-text">
+          {Math.round(progress)}%
+        </p>
       </div>
     </Html>
   );
@@ -146,6 +142,7 @@ export function BuildViewport({
   build,
   onRemoveDrive,
   onRemovePart,
+  mobile = false,
 }: BuildViewportProps) {
   const completedParts = [
     build.CPU,
@@ -178,7 +175,7 @@ export function BuildViewport({
     : [];
 
   return (
-    <section className="relative flex-1 min-h-0 overflow-hidden border build-scene border-border bg-surface">
+    <section className="relative h-full min-h-0 overflow-hidden border viewport-vignette build-scene border-border bg-surface">
       <Canvas
         shadows
         camera={{
@@ -186,32 +183,45 @@ export function BuildViewport({
           fov: 38,
         }}
         dpr={[1, 1.5]}
+        className="w-full h-full"
       >
         <RendererSettings />
-        <ambientLight intensity={0.45} />
+        <ambientLight intensity={0.22} />
 
-        <hemisphereLight intensity={1} color="#ffffff" groundColor="#292d35" />
-
+        {/* MAIN KEY */}
         <directionalLight
           castShadow
-          position={[5, 8, 6]}
-          intensity={2.5}
-          shadow-mapSize-width={1024}
-          shadow-mapSize-height={1024}
+          position={[6, 7, 6]}
+          intensity={3}
+          color="#f4efe6"
+          shadow-mapSize-width={2048}
+          shadow-mapSize-height={2048}
           shadow-camera-near={0.5}
-          shadow-camera-far={20}
+          shadow-camera-far={25}
           shadow-bias={-0.0005}
         />
 
-        <directionalLight position={[-4, 4, 4]} intensity={1.2} />
+        {/* SOFT FILL */}
+        <directionalLight
+          position={[-4, 3, 4]}
+          intensity={0.75}
+          color="#d7dbe2"
+        />
 
-        <directionalLight position={[-1, 5, -6]} intensity={1.2} />
-
+        {/* VERY SUBTLE ORANGE RIM */}
         <pointLight
-          position={[2, 2, 4]}
-          intensity={15}
-          distance={12}
+          position={[-3, 3.5, -4]}
+          intensity={6}
+          distance={10}
           decay={2}
+          color="#ff5a1f"
+        />
+        <pointLight
+          position={[0.2, 0.8, 0.6]}
+          intensity={2.5}
+          distance={4}
+          decay={2}
+          color="#ffffff"
         />
         <Suspense fallback={<ModelLoader />}>
           <Center>
@@ -261,11 +271,12 @@ export function BuildViewport({
         <span className="absolute border-b border-l bottom-3 left-3 size-5 border-accent sm:bottom-5 sm:left-5" />
         <span className="absolute border-b border-r bottom-3 right-3 size-5 border-accent sm:bottom-5 sm:right-5" />
 
-        <div className="absolute hidden px-4 py-3 border-l-2 left-5 top-5 border-accent bg-surface/80 backdrop-blur-sm sm:block">
-          <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-muted">
-            Assembly viewport / 01
+        <div className="absolute hidden px-4 py-3 border-l-2 cut-corner left-5 top-5 border-accent bg-background/85 backdrop-blur-md sm:block">
+          <p className="font-mono text-[8px] uppercase tracking-[0.25em] text-accent-dark">
+            Garage / Assembly
           </p>
-          <p className="mt-1 text-lg font-medium font-display text-text">
+
+          <p className="mt-1 text-xl italic font-bold tracking-tight uppercase font-display text-text">
             {selectedCategory}
           </p>
         </div>
@@ -283,50 +294,46 @@ export function BuildViewport({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.2 }}
-            className="absolute pointer-events-auto cursor-pointer  border  bottom-5 left-1/2 w-[calc(100%-2.5rem)] max-w-lg -translate-x-1/2  border-accent bg-surface/85 px-4 py-3 backdrop-blur-md"
+            className="cut-corner hidden lg:block accent-glow pointer-events-auto absolute bottom-5 left-1/2 z-20 w-[calc(100%-2.5rem)] max-w-xl -translate-x-1/2 cursor-pointer border-l-2 border-accent bg-background/90 px-5 py-4 backdrop-blur-md"
           >
             {selectedPart ? (
-              // Product details intentionally stay compact so the canvas remains
-              // the dominant element rather than becoming another product card.
               <div>
-                <div className="flex items-center justify-between gap-4">
+                <div className="flex items-start justify-between gap-5">
                   <div className="min-w-0">
-                    <p className="font-mono text-[8px] uppercase tracking-[0.18em] text-accent-dark">
+                    <p className="font-mono text-[8px] uppercase tracking-[0.24em] text-accent-dark">
                       Inspecting / {selectedPart.componentType}
                     </p>
-                    <p className="mt-1 text-sm font-medium truncate font-text text-text">
+
+                    <p className="mt-1 text-lg italic font-bold uppercase truncate font-display text-text">
                       {selectedPart.name}
                     </p>
                   </div>
-                  <span className="font-mono text-xs shrink-0 text-muted">
-                    ${selectedPart.price.toFixed(2)}
-                  </span>
+
+                  <div className="text-right shrink-0">
+                    <p className="font-mono text-[8px] uppercase tracking-widest text-muted">
+                      Price
+                    </p>
+                    <p className="mt-1 font-mono text-base font-bold text-accent-dark">
+                      ${selectedPart.price.toFixed(2)}
+                    </p>
+                  </div>
                 </div>
 
-                <div className="mt-3 flex flex-wrap gap-1.5">
+                <div className="flex flex-wrap mt-3 gap-x-4 gap-y-1">
                   {selectedPartHighlights.map((spec) => (
                     <span
                       key={spec.label}
                       title={specDescriptions[spec.label] ?? spec.label}
-                      className="
-          border border-border
-          bg-background/60
-          px-2 py-1
-          font-mono text-[8px]
-          uppercase tracking-widest
-          text-muted
-        "
+                      className="font-mono text-[9px] uppercase tracking-wide text-muted"
                     >
-                      {spec.value}
+                      <span className="text-text">{spec.value}</span>
                     </span>
                   ))}
                 </div>
               </div>
             ) : (
-              // The empty state teaches the two available interactions without
-              // blocking the canvas or implying that a part was auto-selected.
-              <div className="flex items-center justify-between gap-4 font-mono text-[9px] uppercase tracking-[0.16em] text-muted">
-                <span>Select a part from the index</span>
+              <div className="flex items-center justify-between gap-4 font-mono text-[9px] uppercase tracking-[0.18em] text-muted">
+                <span>Select hardware / Begin assembly</span>
                 <span className="hidden sm:block">
                   Drag / Orbit · Scroll / Zoom
                 </span>
@@ -335,45 +342,38 @@ export function BuildViewport({
           </motion.div>
         </AnimatePresence>
       </div>
-      <aside
-        className="
-    absolute right-4 top-4
-    flex max-h-[calc(100%-2rem)] w-[320px]
-    flex-col
-    border border-border
-    bg-surface/95
-    backdrop-blur-md
-  "
-      >
-        {/* HEADER */}
-
+      {/* HEADER */}
+      <aside className="cut-corner sm:block lg:flex hidden absolute right-5 top-5 z-20  max-h-[calc(100%-2.5rem)] w-[310px] flex-col overflow-hidden border border-border bg-background/92 shadow-xl backdrop-blur-md">
         <div className="px-4 py-4 border-b border-border">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <h2 className="text-base font-semibold font-text text-text">
-                Your build
-              </h2>
+          <div className="px-4 py-4 border-b border-border">
+            <div className="absolute z-30 pointer-events-none right-3 top-3">
+              <div className="px-3 py-2 border cut-corner border-border bg-background/90 backdrop-blur-md">
+                <p className="font-mono text-[7px] uppercase tracking-widest text-muted">
+                  Build status
+                </p>
 
-              <p className="mt-1 text-xs font-text text-muted">
-                {completedParts} of {totalPartCategories} categories selected
-              </p>
+                <h2 className="mt-1 text-xl italic font-bold uppercase font-display text-text">
+                  Your machine
+                </h2>
+
+                <p className="mt-0.5 font-display text-sm font-bold italic">
+                  {completedParts}/7
+                </p>
+              </div>
+
+              <div className="flex items-center gap-1.5 border border-accent/30 bg-accent-soft px-2 py-1 font-mono text-[10px] font-bold text-accent-dark">
+                <Check className="size-3" />
+                {completedParts}/{totalPartCategories}
+              </div>
             </div>
 
-            <div
-              className="
-          flex items-center gap-1.5
-          border border-accent/20
-          bg-accent-soft
-          px-2 py-1
-          font-text text-xs
-          font-medium text-accent-dark
-        "
-            >
-              <Check className="size-3" />
-              {completedParts}/{totalPartCategories}
+            <div className="mt-4 h-[3px] bg-surface">
+              <div
+                className="h-full transition-all duration-300 bg-accent"
+                style={{ width: `${buildProgress}%` }}
+              />
             </div>
           </div>
-
           {/* PROGRESS BAR */}
 
           <div className="mt-4 h-1.5 overflow-hidden bg-background">
@@ -467,7 +467,7 @@ export function BuildViewport({
               </div>
 
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-medium font-text text-muted">
+                <p className="font-mono text-[8px] uppercase tracking-[0.2em] text-muted">
                   Storage
                 </p>
 
@@ -512,19 +512,18 @@ export function BuildViewport({
 
         {/* TOTAL */}
 
-        <div
-          className="px-4 py-4 border-t shrink-0 border-border bg-surface"
-        >
+        <div className="px-4 py-4 border-t shrink-0 border-accent/30 bg-surface">
           <div className="flex items-end justify-between gap-4">
             <div>
-              <p className="text-xs font-text text-muted">Estimated total</p>
-
-              <p className="mt-1 font-text text-[11px] text-muted">
+              <p className="font-mono text-[8px] uppercase tracking-[0.22em] text-accent-dark">
+                Build value
+              </p>
+              <p className="mt-1 font-mono text-[9px] uppercase tracking-wide text-muted">
                 Current configuration
               </p>
             </div>
 
-            <span className="font-mono text-xl font-semibold text-text">
+            <span className="text-2xl italic font-bold font-display text-text">
               ${totalPrice.toFixed(2)}
             </span>
           </div>
