@@ -18,6 +18,7 @@ import {
   validateBuild,
 } from "@/Logic/Compatibility/Compatibility";
 import { savedBuildListSchema } from "@/zod/buildSchema";
+import { useBuildStore } from "@/stores/BuildStore";
 
 // Catalog IDs are deliberately translated at the page boundary. The sidebar
 // can keep stable data-oriented keys while the viewport uses more atmospheric,
@@ -33,27 +34,15 @@ const categoryNames: Record<string, string> = {
   case: "Chassis frame",
 };
 
-/**
- * Composes the interactive PC-building workspace.
- *
- * At this stage, a selected product is inspection state rather than a complete
- * saved build. Keeping those concepts separate avoids accidentally presenting
- * a single inspected part as a persisted or compatibility-validated build.
- *
- * @returns {JSX.Element} The open part catalog and full-size 3D viewport shell.
- * @remarks This component does not intentionally throw. Rendering failures from
- * the sidebar, Motion, or WebGL canvas propagate to React's error boundary.
- */
 export function BuildPage() {
   const [catalogCategory, setCatalogCategory] = useState("cpu");
   const [previewPart, setPreviewPart] = useState<CompatibleComponent | null>(
     null,
   );
-  // whole Build state
-  const [build, setBuild] = useState<BUILD>({ STORAGE: [] });
-  // Zustand
-  const expandCategory = useSidebarStore((state) => state.openCategory);
-
+  const [build, setBuild] = useState<BUILD>({ STORAGE: [] });  // whole Build state
+  const builds = useBuildStore((state) => state.build)
+  console.log("Zustand Build", builds)
+  const expandCategory = useSidebarStore((state) => state.openCategory);  // Zustand
   // Saved Build State
   const [savedBuilds, setSavedBuilds] = useState<SavedBuild[]>(() => {
     try {
@@ -71,8 +60,8 @@ export function BuildPage() {
   });
   const [buildName, setBuildName] = useState("");
 
-  // Local-Storage
 
+  // Local-Storage
   useEffect(() => {
     localStorage.setItem("retroforge.savedBuilds", JSON.stringify(savedBuilds));
   }, [savedBuilds]);
@@ -83,15 +72,6 @@ export function BuildPage() {
     ? `${previewPart.componentType}-${previewPart.id}`
     : undefined;
 
-  /**
-   * Switches catalog context and clears an inspection that no longer belongs
-   * to the visible category.
-   *
-   * @param {string} componentId - Stable sidebar ID such as `cpu` or `storage`.
-   * @returns {void}
-   * @remarks This state-only handler does not intentionally throw.
-   */
-
   function openCategory(componentId: string) {
     setCatalogCategory(componentId);
     // Clearing prevents a GPU name, for example, from remaining visible after
@@ -100,7 +80,6 @@ export function BuildPage() {
   }
 
   // helper function
-
   function installIfCompatible(proposedBuild: BUILD) {
     const components = buildToComponents(proposedBuild);
     const results = validateBuild(components);
@@ -257,6 +236,7 @@ export function BuildPage() {
       return;
     }
 
+
     setBuild((prevBuild) => ({
       ...prevBuild,
       [category]: undefined,
@@ -311,8 +291,6 @@ export function BuildPage() {
 
   return (
     <MotionConfig reducedMotion="user">
-      {/* Builders need the catalog immediately; Home deliberately overrides
-          this provider default and begins with the sidebar collapsed. */}
       <SidebarProvider
         defaultOpen
         className="h-dvh min-h-dvh overflow-hidden bg-background text-text"
@@ -385,8 +363,6 @@ export function BuildPage() {
 
             <BuildViewport
               selectedCategory={
-                // The fallback keeps the UI resilient if a new catalog group is
-                // added before its friendlier viewport name is written.
                 categoryNames[catalogCategory] ?? catalogCategory
               }
               selectedPart={previewPart}

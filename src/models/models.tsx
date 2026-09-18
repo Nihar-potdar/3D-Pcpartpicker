@@ -34,7 +34,7 @@ export function PSU(props: ModelProps) {
   );
 }
 
-export function GPU(props: ModelProps) {
+export function GPUModel(props: ModelProps) {
   const { scene } = useGLTF(`${BASE}models/nvidia_rtx_2080_ti.glb`);
 
   return (

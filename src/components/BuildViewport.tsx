@@ -7,7 +7,7 @@ import { Canvas } from "@react-three/fiber";
 import { AnimatePresence, motion } from "motion/react";
 import type { BUILD, CompatibleComponent } from "@/data/type";
 import { Suspense } from "react";
-import { Case, corsair4000DTransforms, GPU, Motherboard, PSU } from "@/models/models";
+import { PcAssembly } from "./PcAssembly";
 /** Data supplied by the Build page to keep Three.js independent of routing. */
 type BuildViewportProps = {
   selectedCategory: string;
@@ -87,21 +87,7 @@ export function BuildViewport({
           }
         >
           <Center>
-            <Case scale={10} position={[0, -1.8, 0]} />
-            {/* <TransformControls
-              mode="translate"
-              onMouseUp={(e) => {
-                console.log(e?.target.object.position);
-              }}
-            > */}
-            <GPU
-              {...corsair4000DTransforms.gpu}
-            />
-            {/* </TransformControls> */}
-            <Motherboard
-              {...corsair4000DTransforms.motherboard} 
-            />
-            <PSU {...corsair4000DTransforms.psu} />
+           <PcAssembly/>
           </Center>
         </Suspense>
 
@@ -237,7 +223,7 @@ export function BuildViewport({
           </div>
           <div className="mt-4 border-t border-border pt-3">
             <p className="text-xs text-muted">PSU</p>
-            <p className="mt-1 break-words text-sm">
+            <p className="mt-1 wrap-break-word text-sm">
               {build.PSU?.name ?? "No PSU selected"}
               {build.PSU && (
                 <button
@@ -251,7 +237,7 @@ export function BuildViewport({
           </div>
           <div className="mt-4 border-t border-border pt-3">
             <p className="text-xs text-muted">CASE</p>
-            <p className="mt-1 break-words text-sm">
+            <p className="mt-1 wrap-break-word text-sm">
               {build.CASE?.name ?? "No CASE selected"}
               {build.CASE && (
                 <button
@@ -265,7 +251,7 @@ export function BuildViewport({
           </div>
           <div className="mt-4 border-t border-border pt-3">
             <p className="text-xs text-muted">STORAGE</p>
-            <div className="mt-1 break-words text-sm">
+            <div className="mt-1 wrap-break-word text-sm">
               {build.STORAGE.length === 0 ? (
                 <p>No Storage Selected</p>
               ) : (
