@@ -45,7 +45,6 @@ function PageLoader() {
 
 /**
  * Defines the client-side routing boundary for the RetroForge application.
- *
  * @returns {JSX.Element} The router and whichever page matches the current URL.
  * @throws {Error} React Router can throw if another router is mounted above
  * this component; `App` is therefore intended to be the single router owner.

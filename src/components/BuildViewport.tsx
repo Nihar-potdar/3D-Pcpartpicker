@@ -1,9 +1,10 @@
-import { Float, Grid, OrbitControls } from "@react-three/drei";
-import { Canvas } from "@react-three/fiber";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { Center, Grid, Html, OrbitControls, useProgress } from "@react-three/drei";
+import { Canvas, useThree } from "@react-three/fiber";
+import { AnimatePresence, motion } from "motion/react";
 import type { BUILD, CompatibleComponent } from "@/data/type";
+import { Suspense, useEffect } from "react";
+import { PcAssembly } from "./PcAssembly";
 
-/** Data supplied by the Build page to keep Three.js independent of routing. */
 type BuildViewportProps = {
   selectedCategory: string;
   selectedPart: CompatibleComponent | null;
@@ -12,96 +13,28 @@ type BuildViewportProps = {
   onRemovePart: (targetid: string) => void;
 };
 
-/**
- * Draws a lightweight wireframe PC case as the viewport's orientation anchor.
- *
- * Primitive geometry was chosen instead of a downloaded model so the workspace
- * remains fast and reliable while real product-model mapping is still pending.
- * The dimensions are visual proportions, not physical compatibility values.
- *
- * @param {{ reduceMotion: boolean }} props - Accessibility flag controlling the
- * optional idle float and rotation applied by `@react-three/drei`.
- * @returns {JSX.Element} A group of Three.js meshes representing a case shell.
- * @remarks This component does not intentionally throw; WebGL render errors are
- * propagated by React Three Fiber.
- */
-function CaseBlueprint({ reduceMotion }: { reduceMotion: boolean }) {
-  // Setting every motion intensity to zero preserves the same scene graph for
-  // reduced-motion users instead of maintaining a second render path.
-  return (
-    <Float
-      speed={reduceMotion ? 0 : 0.55}
-      rotationIntensity={reduceMotion ? 0 : 0.08}
-      floatIntensity={reduceMotion ? 0 : 0.18}
-    >
-      <group position={[0, 0.15, 0]} rotation={[0.02, -0.42, 0]}>
-        {/* Outer chassis: wireframe keeps the grid and internal bays visible. */}
-        <mesh>
-          <boxGeometry args={[3.8, 4.6, 2.4]} />
-          <meshBasicMaterial
-            color="#5d6b82"
-            wireframe
-            transparent
-            opacity={0.44}
-          />
-        </mesh>
+function RendererSettings() {
+  const gl = useThree((state) => state.gl);
 
-        {/* Rear motherboard tray: a translucent plane establishes depth. */}
-        <mesh position={[0, 0.25, -0.88]}>
-          <boxGeometry args={[3.15, 3.45, 0.08]} />
-          <meshBasicMaterial color="#5d6b82" transparent opacity={0.18} />
-        </mesh>
+  useEffect(() => {
+    gl.toneMappingExposure = 1.4;
+  }, [gl]);
 
-        {/* Mainboard placeholder: intentionally distinct from the case shell. */}
-        <mesh position={[-0.2, 0.55, -0.75]}>
-          <boxGeometry args={[1.9, 2.2, 0.15]} />
-          <meshBasicMaterial
-            color="#77736b"
-            wireframe
-            transparent
-            opacity={0.55}
-          />
-        </mesh>
-
-        {/* Lower power-supply chamber helps the silhouette read as a PC case. */}
-        <mesh position={[0.25, -1.45, 0.35]}>
-          <boxGeometry args={[2.75, 0.72, 1.55]} />
-          <meshBasicMaterial
-            color="#77736b"
-            wireframe
-            transparent
-            opacity={0.5}
-          />
-        </mesh>
-
-        {/* Horizontal expansion card suggests the future GPU placement area. */}
-        <mesh position={[0.1, 0.28, 0.12]}>
-          <boxGeometry args={[2.65, 0.45, 0.62]} />
-          <meshBasicMaterial
-            color="#5d6b82"
-            wireframe
-            transparent
-            opacity={0.62}
-          />
-        </mesh>
-      </group>
-    </Float>
-  );
+  return null;
 }
 
-/**
- * Hosts the large 3D assembly area and its HTML information overlay.
- *
- * React Three Fiber owns the WebGL canvas, Drei provides the infinite grid and
- * orbit controls, and Motion animates only the selected-part readout. Product
- * data is read-only here; persistence and compatibility belong to build logic.
- *
- * @param {BuildViewportProps} props - Human-readable active category and the
- * optional product currently being inspected.
- * @returns {JSX.Element} An orbitable 3D viewport with accessible status text.
- * @throws {Error} WebGL context or Three.js render failures may propagate to the
- * nearest React error boundary on unsupported devices.
- */
+function ModelLoader() {
+  const { progress } = useProgress();
+
+  return (
+    <Html center>
+      <div className="font-mono text-xs uppercase tracking-widest text-muted">
+        Loading assmebly {Math.round(progress)}%
+      </div>
+    </Html>
+  )
+}
+
 export function BuildViewport({
   selectedCategory,
   selectedPart,
@@ -109,9 +42,6 @@ export function BuildViewport({
   onRemoveDrive,
   onRemovePart,
 }: BuildViewportProps) {
-  // The OS/browser accessibility preference controls the purely decorative
-  // idle movement; manual orbit and zoom remain available for exploration.
-  const shouldReduceMotion = useReducedMotion();
   const partsSubtotal =
     (build.CPU?.price ?? 0) +
     (build.GPU?.price ?? 0) +
@@ -127,20 +57,55 @@ export function BuildViewport({
 
   return (
     <section className="build-scene relative min-h-0 flex-1 overflow-hidden border border-border bg-surface">
-      {/* The camera begins outside the whole wireframe so users understand the
-          object before orbiting it. Pixel density is capped to protect GPU
-          performance without making thin lines rough on common displays. */}
       <Canvas
-        camera={{ position: [7.2, 4.8, 8.2], fov: 42 }}
+        shadows
+        camera={{
+          position: [6.5, 3.5, 7.5],
+          fov: 38,
+        }}
         dpr={[1, 1.5]}
-        gl={{ antialias: true, alpha: true }}
-        className="bg-[radial-gradient(circle_at_50%_42%,var(--color-accent-soft),transparent_62%)]"
       >
-        <ambientLight intensity={0.85} />
-        <directionalLight position={[6, 8, 4]} intensity={1.2} />
+        <RendererSettings />
+        <ambientLight intensity={0.45} />
 
-        {/* A horizontal infinite grid creates genuine 3D perspective and is
-            visually denser than the flat 2D grid used on landing pages. */}
+        <hemisphereLight intensity={1} color="#ffffff" groundColor="#292d35" />
+
+        <directionalLight
+          castShadow
+          position={[5, 8, 6]}
+          intensity={2.5}
+          shadow-mapSize-width={1024}
+          shadow-mapSize-height={1024}
+          shadow-camera-near={0.5}
+          shadow-camera-far={20}
+          shadow-bias={-0.0005}
+        />
+
+        <directionalLight position={[-4, 4, 4]} intensity={1.2} />
+
+        <directionalLight position={[-1, 5, -6]} intensity={1.2} />
+
+        <pointLight
+          position={[2, 2, 4]}
+          intensity={15}
+          distance={12}
+          decay={2}
+        />
+        <Suspense fallback={<ModelLoader/>}>
+          <Center>
+            <PcAssembly />
+          </Center>
+        </Suspense>
+
+        <mesh
+          rotation={[-Math.PI / 2, 0, 0]}
+          position={[0, -2.29, 0]}
+          receiveShadow
+        >
+          <planeGeometry args={[30, 30]} />
+          <shadowMaterial transparent opacity={0.2} />
+        </mesh>
+
         <Grid
           position={[0, -2.3, 0]}
           args={[32, 32]}
@@ -155,17 +120,14 @@ export function BuildViewport({
           infiniteGrid
         />
 
-        <CaseBlueprint reduceMotion={Boolean(shouldReduceMotion)} />
-        {/* Damping makes direct manipulation feel controlled; distance and
-            polar limits stop users losing the model or going below the floor. */}
         <OrbitControls
           makeDefault
           enableDamping
           dampingFactor={0.06}
           minDistance={5}
-          maxDistance={17}
+          maxDistance={14}
           maxPolarAngle={Math.PI / 2.05}
-          target={[0, 0, 0]}
+          target={[0, 0.2, 0]}
         />
       </Canvas>
 
@@ -233,111 +195,110 @@ export function BuildViewport({
       <aside className="build-summary">
         <h2 className="build-summary-heading">Your build</h2>
         <div className="build-summary-items">
-
-        <div className="mt-4 border-t border-border pt-3">
-          <p className="text-xs text-muted">CPU</p>
-          <p className="mt-1 break-words text-sm">
-            {build.CPU?.name ?? "No CPU selected"}
-            {build.CPU && (
-              <button
-                className="build-remove-button"
-                onClick={() => onRemovePart("CPU")}
-              >
-                Remove
-              </button>
-            )}
-          </p>
-        </div>
-        <div className="mt-4 border-t border-border pt-3">
-          <p className="text-xs text-muted">GPU</p>
-          <p className="mt-1 break-words text-sm">
-            {build.GPU?.name ?? "No GPU selected"}
-            {build.GPU && (
-              <button
-                className="build-remove-button"
-                onClick={() => onRemovePart("GPU")}
-              >
-                Remove
-              </button>
-            )}
-          </p>
-        </div>
-        <div className="mt-4 border-t border-border pt-3">
-          <p className="text-xs text-muted">MOTHERBOARD</p>
-          <p className="mt-1 break-words text-sm">
-            {build.MOTHERBOARD?.name ?? "No MOTHERBOARD selected"}
-            {build.MOTHERBOARD && (
-              <button
-                className="build-remove-button"
-                onClick={() => onRemovePart("MOTHERBOARD")}
-              >
-                Remove
-              </button>
-            )}
-          </p>
-        </div>
-        <div className="mt-4 border-t border-border pt-3">
-          <p className="text-xs text-muted">RAM</p>
-          <p className="mt-1 break-words text-sm">
-            {build.RAM?.name ?? "No RAM selected"}
-            {build.RAM && (
-              <button
-                className="build-remove-button"
-                onClick={() => onRemovePart("RAM")}
-              >
-                Remove
-              </button>
-            )}
-          </p>
-        </div>
-        <div className="mt-4 border-t border-border pt-3">
-          <p className="text-xs text-muted">PSU</p>
-          <p className="mt-1 break-words text-sm">
-            {build.PSU?.name ?? "No PSU selected"}
-            {build.PSU && (
-              <button
-                className="build-remove-button"
-                onClick={() => onRemovePart("PSU")}
-              >
-                Remove
-              </button>
-            )}
-          </p>
-        </div>
-        <div className="mt-4 border-t border-border pt-3">
-          <p className="text-xs text-muted">CASE</p>
-          <p className="mt-1 break-words text-sm">
-            {build.CASE?.name ?? "No CASE selected"}
-            {build.CASE && (
-              <button
-                className="build-remove-button"
-                onClick={() => onRemovePart("CASE")}
-              >
-                Remove
-              </button>
-            )}
-          </p>
-        </div>
-        <div className="mt-4 border-t border-border pt-3">
-          <p className="text-xs text-muted">STORAGE</p>
-          <div className="mt-1 break-words text-sm">
-            {build.STORAGE.length === 0 ? (
-              <p>No Storage Selected</p>
-            ) : (
-              build.STORAGE.map((drive) => (
-                <div key={drive.instanceId}>
-                  <p>{drive.product.name}</p>
-                  <button
-                    className="build-remove-button"
-                    onClick={() => onRemoveDrive(drive.instanceId)}
-                  >
-                    Remove
-                  </button>
-                </div>
-              ))
-            )}
+          <div className="mt-4 border-t border-border pt-3">
+            <p className="text-xs text-muted">CPU</p>
+            <p className="mt-1 wrap-break-word text-sm">
+              {build.CPU?.name ?? "No CPU selected"}
+              {build.CPU && (
+                <button
+                  className="build-remove-button"
+                  onClick={() => onRemovePart("CPU")}
+                >
+                  Remove
+                </button>
+              )}
+            </p>
           </div>
-        </div>
+          <div className="mt-4 border-t border-border pt-3">
+            <p className="text-xs text-muted">GPU</p>
+            <p className="mt-1 wrap-break-word text-sm">
+              {build.GPU?.name ?? "No GPU selected"}
+              {build.GPU && (
+                <button
+                  className="build-remove-button"
+                  onClick={() => onRemovePart("GPU")}
+                >
+                  Remove
+                </button>
+              )}
+            </p>
+          </div>
+          <div className="mt-4 border-t border-border pt-3">
+            <p className="text-xs text-muted">MOTHERBOARD</p>
+            <p className="mt-1 wrap-break-word text-sm">
+              {build.MOTHERBOARD?.name ?? "No MOTHERBOARD selected"}
+              {build.MOTHERBOARD && (
+                <button
+                  className="build-remove-button"
+                  onClick={() => onRemovePart("MOTHERBOARD")}
+                >
+                  Remove
+                </button>
+              )}
+            </p>
+          </div>
+          <div className="mt-4 border-t border-border pt-3">
+            <p className="text-xs text-muted">RAM</p>
+            <p className="mt-1 wrap-break-word text-sm">
+              {build.RAM?.name ?? "No RAM selected"}
+              {build.RAM && (
+                <button
+                  className="build-remove-button"
+                  onClick={() => onRemovePart("RAM")}
+                >
+                  Remove
+                </button>
+              )}
+            </p>
+          </div>
+          <div className="mt-4 border-t border-border pt-3">
+            <p className="text-xs text-muted">PSU</p>
+            <p className="mt-1 wrap-break-word text-sm">
+              {build.PSU?.name ?? "No PSU selected"}
+              {build.PSU && (
+                <button
+                  className="build-remove-button"
+                  onClick={() => onRemovePart("PSU")}
+                >
+                  Remove
+                </button>
+              )}
+            </p>
+          </div>
+          <div className="mt-4 border-t border-border pt-3">
+            <p className="text-xs text-muted">CASE</p>
+            <p className="mt-1 wrap-break-word text-sm">
+              {build.CASE?.name ?? "No CASE selected"}
+              {build.CASE && (
+                <button
+                  className="build-remove-button"
+                  onClick={() => onRemovePart("CASE")}
+                >
+                  Remove
+                </button>
+              )}
+            </p>
+          </div>
+          <div className="mt-4 border-t border-border pt-3">
+            <p className="text-xs text-muted">STORAGE</p>
+            <div className="mt-1 wrap-break-word text-sm">
+              {build.STORAGE.length === 0 ? (
+                <p>No Storage Selected</p>
+              ) : (
+                build.STORAGE.map((drive) => (
+                  <div key={drive.instanceId}>
+                    <p>{drive.product.name}</p>
+                    <button
+                      className="build-remove-button"
+                      onClick={() => onRemoveDrive(drive.instanceId)}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
         </div>
         <div className="build-summary-total">
           <span className="text-sm text-muted">Total</span>
