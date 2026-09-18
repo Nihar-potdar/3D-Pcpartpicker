@@ -1,20 +1,16 @@
 import {
   Box,
-  ChevronRight,
   CircuitBoard,
   Cpu,
-  Fan,
   Gpu,
   HardDrive,
   MemoryStick,
   PlugZap,
+  Search,
   type LucideIcon,
 } from "lucide-react";
-import { AnimatePresence, motion } from "motion/react";
+import { useMemo, useState } from "react";
 
-// These arrays are the project's current local catalog dependency. Importing
-// them directly keeps the MVP transparent and avoids introducing a database or
-// network layer before the product-selection flow is complete.
 import { cases } from "@/data/case";
 import { cpus } from "@/data/cpu";
 import { gpus } from "@/data/gpu";
@@ -24,21 +20,16 @@ import { ramKits } from "@/data/ram";
 import { storageDevices } from "@/data/storage";
 import type { CompatibleComponent } from "@/data/type";
 
+import { getPartHighlights } from "@/lib/getPartHighlights";
+import { specDescriptions } from "@/data/specDescriptions";
+
 import {
   Sidebar,
   SidebarContent,
   SidebarGroup,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
   SidebarRail,
 } from "../sidebar";
-import { useSidebarStore } from "@/stores/expandedCategory";
-import { getPartHighlights } from "@/lib/getPartHighlights";
-import { specDescriptions } from "@/data/specDescriptions";
 
-/** Normalized view of differently typed product arrays for sidebar rendering. */
 type ComponentGroup = {
   name: string;
   id: string;
@@ -46,53 +37,64 @@ type ComponentGroup = {
   items: CompatibleComponent[];
 };
 
-// One adapter table drives labels, icons, IDs, and product collections. This
-// prevents eight copied conditional branches from drifting apart. Cooling is
-// deliberately empty because no cooling dataset exists yet; the UI reports
-// that honestly instead of fabricating products.
 const componentGroups: ComponentGroup[] = [
-  { name: "CPU", id: "cpu", icon: Cpu, items: cpus },
-  { name: "GPU", id: "gpu", icon: Gpu, items: gpus },
   {
-    name: "MOTHERBOARD",
+    name: "CPU",
+    id: "cpu",
+    icon: Cpu,
+    items: cpus,
+  },
+  {
+    name: "GPU",
+    id: "gpu",
+    icon: Gpu,
+    items: gpus,
+  },
+  {
+    name: "Motherboard",
     id: "motherboard",
     icon: CircuitBoard,
     items: motherboards,
   },
-  { name: "MEMORY", id: "ram", icon: MemoryStick, items: ramKits },
   {
-    name: "STORAGE",
+    name: "Memory",
+    id: "ram",
+    icon: MemoryStick,
+    items: ramKits,
+  },
+  {
+    name: "Storage",
     id: "storage",
     icon: HardDrive,
     items: storageDevices,
   },
-  { name: "COOLING", id: "cooler", icon: Fan, items: [] },
-  { name: "PSU", id: "psu", icon: PlugZap, items: psus },
-  { name: "CASE", id: "case", icon: Box, items: cases },
+  {
+    name: "PSU",
+    id: "psu",
+    icon: PlugZap,
+    items: psus,
+  },
+  {
+    name: "Case",
+    id: "case",
+    icon: Box,
+    items: cases,
+  },
 ];
 
-/**
- * Inputs shared by the compact Home index and expandable Build catalog.
- * Optional catalog props let Home reuse the category navigation without owning
- * product-inspection state that only exists on Build.
- */
 type ComponentSidebarProps = {
   selectedComponent: string;
   onSelectComponent: (componentId: string) => void;
+
   showCatalog?: boolean;
+
   selectedPartKey?: string;
-  onSelectPart?: (part: CompatibleComponent) => void;
+
+  onSelectPart?: (
+    part: CompatibleComponent
+  ) => void;
 };
 
-/**
- * Renders a collapsible component-category index and optional product catalog.
- *
- * @param {ComponentSidebarProps} props - Controlled category state, optional
- * product-selection state, and callbacks owned by the surrounding page.
- * @returns {JSX.Element} A shadcn sidebar that can slide fully off canvas.
- * @throws {Error} Throws when rendered outside `SidebarProvider`, because the
- * underlying sidebar primitives require that React context.
- */
 export function ComponentSidebar({
   selectedComponent,
   onSelectComponent,
@@ -100,29 +102,78 @@ export function ComponentSidebar({
   selectedPartKey,
   onSelectPart,
 }: ComponentSidebarProps) {
-  // Expansion is intentionally local UI state: changing which accordion is open
-  // should not pollute the application build state or URL.
+  const [searchQuery, setSearchQuery] =
+    useState("");
 
-  const expandedCategory = useSidebarStore((state) => state.expandedCategory);
-  const toggleCategory = useSidebarStore((state) => state.toggleCategory);
-
-  /**
-   * Reports the active category and, when enabled, toggles its product list.
+  /*
+   * Find the currently selected category.
    *
-   * @param {string} componentId - Stable lowercase ID of the clicked group.
-   * @returns {void}
-   * @remarks Callback errors from the parent are allowed to propagate so React
-   * can surface them rather than leaving sidebar and page state inconsistent.
+   * If nothing matches for some reason,
+   * fall back to CPU.
    */
-  function handleGroupClick(componentId: string) {
-    // The parent owns selection because the viewport and footer also consume it.
+  const activeGroup =
+    componentGroups.find(
+      (component) =>
+        component.id === selectedComponent,
+    ) ?? componentGroups[0];
+
+  /*
+   * Search more than just the product name.
+   *
+   * This means:
+   *
+   * "corsair"
+   * "ddr5"
+   * "6000"
+   * "cl30"
+   * "32gb"
+   *
+   * can all return useful results.
+   */
+  const filteredItems = useMemo(() => {
+    const query = searchQuery
+      .trim()
+      .toLowerCase();
+
+    if (!query) {
+      return activeGroup.items;
+    }
+
+    return activeGroup.items.filter((part) => {
+      const highlights =
+        getPartHighlights(part);
+
+      const searchableText = [
+        part.name,
+        part.brand,
+
+        ...highlights.flatMap(
+          (highlight) => [
+            highlight.label,
+            highlight.value,
+          ],
+        ),
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      return searchableText.includes(query);
+    });
+  }, [activeGroup, searchQuery]);
+
+  function handleCategoryChange(
+    componentId: string,
+  ) {
     onSelectComponent(componentId);
 
-    if (showCatalog) {
-      // A single active group reduces sidebar height and makes closing an open
-      // group possible by clicking its heading again.
-      toggleCategory(componentId);
-    }
+    /*
+     * Clear the previous category's search.
+     *
+     * Searching "DDR5" in RAM and then
+     * switching to cases shouldn't leave
+     * the user staring at an empty catalog.
+     */
+    setSearchQuery("");
   }
 
   return (
@@ -130,125 +181,351 @@ export function ComponentSidebar({
       collapsible="offcanvas"
       className="border-r border-border bg-sidebar"
     >
-      <SidebarContent className="pt-20">
-        <SidebarGroup>
-          <SidebarGroupLabel className="mb-5 font-mono text-[10px] tracking-[0.25em] text-muted">
-            PART INDEX / 01
-          </SidebarGroupLabel>
+      <SidebarContent className="pt-20 pb-5">
+        <SidebarGroup className="px-3">
 
-          <SidebarMenu className="gap-1">
-            {componentGroups.map((component) => {
-              // Component constructors must begin with a capital letter before
-              // React can render the icon stored in data as JSX.
-              const Icon = component.icon;
-              const active = selectedComponent === component.id;
-              const expanded = expandedCategory === component.id;
+          {/* SIDEBAR TITLE */}
 
-              return (
-                <SidebarMenuItem key={component.id}>
-                  <SidebarMenuButton
+          <div className="px-1 pb-5">
+            <p
+              className="text-xl font-semibold tracking-tight font-text text-text"
+            >
+              Parts
+            </p>
+
+            <p
+              className="mt-1 text-sm leading-5 font-text text-muted"
+            >
+              Choose components for your
+              system.
+            </p>
+          </div>
+
+          {/* CATEGORY GRID */}
+
+          <div
+            className="grid grid-cols-2 gap-2 "
+          >
+            {componentGroups.map(
+              (component) => {
+                const Icon = component.icon;
+
+                const active =
+                  selectedComponent ===
+                  component.id;
+
+                return (
+                  <button
+                    key={component.id}
                     type="button"
-                    aria-expanded={showCatalog ? expanded : undefined}
-                    isActive={active}
-                    onClick={() => handleGroupClick(component.id)}
-                    className="relative h-11 rounded-none border-l-2 border-transparent font-mono text-xs tracking-[0.15em] text-muted hover:bg-accent-soft hover:text-text data-[active=true]:border-accent data-[active=true]:bg-accent-soft data-[active=true]:text-accent-dark"
+                    aria-pressed={active}
+                    onClick={() =>
+                      handleCategoryChange(
+                        component.id,
+                      )
+                    }
+                    className={`
+                      group/category
+                      flex
+                      min-h-16
+                      items-center
+                      gap-2.5
+                      border
+                      px-3
+                      py-3
+                      text-left
+                      transition-colors
+
+                      ${
+                        active
+                          ? `
+                            border-accent
+                            bg-accent-soft
+                            text-text
+                          `
+                          : `
+                            border-border
+                            bg-background/30
+                            text-muted
+                            hover:bg-accent-soft/60
+                            hover:text-text
+                          `
+                      }
+                    `}
                   >
-                    <Icon className="size-4" />
-                    <span>{component.name}</span>
-                    {showCatalog && (
-                      <ChevronRight
-                        aria-hidden="true"
-                        className={`ml-auto size-3 transition-transform duration-200 ${
-                          expanded ? "rotate-90" : ""
-                        }`}
-                      />
-                    )}
-                  </SidebarMenuButton>
+                    <Icon
+                      className={`
+                        size-4
+                        shrink-0
 
-                  <AnimatePresence initial={false}>
-                    {showCatalog && expanded && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{
-                          duration: 0.22,
-                          ease: [0.22, 1, 0.36, 1],
-                        }}
-                        className="overflow-hidden"
+                        ${
+                          active
+                            ? "text-accent-dark"
+                            : "text-muted"
+                        }
+                      `}
+                    />
+
+                    <div className="min-w-0">
+                      <p
+                        className="
+                          truncate
+                          font-text
+                          text-[13px]
+                          font-semibold
+                        "
                       >
-                        <div className="py-1 pl-2 ml-4 overflow-y-auto border-l max-h-72 border-border">
-                          {component.items.length > 0 ? (
-                            component.items.map((part) => {
-                              // IDs are unique only inside each catalog file, so
-                              // the type is required to avoid React key collisions.
-                              const partKey = `${part.componentType}-${part.id}`;
-                              const selected = selectedPartKey === partKey;
-                              const highlights = getPartHighlights(part);
+                        {component.name}
+                      </p>
 
-                              return (
-                                // Optional chaining is required because Home
-                                // intentionally renders no product callback.
-                                <button
-                                  key={partKey}
-                                  type="button"
-                                  onClick={() => onSelectPart?.(part)}
-                                  className={`group/part w-full border-b border-border/60 px-2 py-3 text-left transition-all last:border-b-0 hover:bg-accent-soft ${
-                                    selected ? "bg-accent-soft border-l-2 border-l-accent" : ""
-                                  }`}
-                                >
-                                  <span className="block text-xs font-medium truncate font-text text-text">
-                                    {part.name}
-                                  </span>
-                                  <div className="flex flex-wrap gap-1 mt-2">
-                                    {highlights.map((highlight) => (
-                                      <span
-                                        key={highlight.label}
-                                        title={
-                                        specDescriptions[highlight.label] ?? 
-                                        highlight.label
-                                        }
-                                        className=" border border-border  bg-background/60px px-1.5  
-                                        py-0.5 font-mono text-[8px] uppercase tracking-[0.08em] text-muted "
-                                      >
-                                        {highlight.value}
-                                      </span>
-                                    ))}
-                                  </div>
-                                  <span className="mt-2 flex items-center justify-between gap-2 font-mono text-[9px] uppercase tracking-[0.12em] text-muted">
-                                    <span>{part.brand}</span>
-                                    <span
-                                      className={
-                                        selected ? "text-accent-dark" : "text-text"
-                                      }
-                                    >
-                                      ${part.price.toFixed(2)}
-                                    </span>
-                                  </span>
-                                </button>
-                              );
-                            })
-                          ) : (
-                            // An explicit empty state distinguishes unavailable
-                            // data from a broken accordion or loading failure.
-                            <p className="px-2 py-4 font-mono text-[9px] uppercase tracking-[0.16em] text-muted">
-                              Catalog pending
+                      <p
+                        className="
+                          mt-0.5
+                          font-text
+                          text-[10px]
+                          text-muted
+                        "
+                      >
+                        {
+                          component.items
+                            .length
+                        }{" "}
+                        parts
+                      </p>
+                    </div>
+                  </button>
+                );
+              },
+            )}
+          </div>
+
+          {showCatalog && (
+            <section
+              className="pt-5 mt-6 border-t border-border"
+            >
+              {/* ACTIVE CATEGORY HEADER */}
+
+              <div
+                className="flex items-end justify-between gap-4 "
+              >
+                <div>
+                  <p
+                    className="text-lg font-semibold font-text text-text"
+                  >
+                    {activeGroup.name}
+                  </p>
+
+                  <p
+                    className="mt-1 text-xs font-text text-muted"
+                  >
+                    {filteredItems.length}
+                    {filteredItems.length === 1
+                      ? " component"
+                      : " components"}
+                  </p>
+                </div>
+              </div>
+
+              {/* SEARCH */}
+
+              <div className="relative mt-4">
+                <Search
+                  aria-hidden="true"
+                  className="absolute -translate-y-1/2 pointer-events-none left-3 top-1/2 size-4 text-muted"
+                />
+
+                <input
+                  type="search"
+                  value={searchQuery}
+                  onChange={(event) =>
+                    setSearchQuery(
+                      event.target.value,
+                    )
+                  }
+                  placeholder={`Search ${activeGroup.name.toLowerCase()}...`}
+                  aria-label={`Search ${activeGroup.name}`}
+                  className="w-full pl-10 pr-3 text-sm transition-colors border outline-none h-11 border-border bg-background font-text text-text placeholder:text-muted focus:border-accent"
+                />
+              </div>
+
+              {/* PRODUCTS */}
+
+              <div className="mt-4 space-y-2">
+                {filteredItems.length > 0 ? (
+                  filteredItems.map((part) => {
+                    const partKey = `${part.componentType}-${part.id}`;
+
+                    const selected =
+                      selectedPartKey ===
+                      partKey;
+
+                    const highlights =
+                      getPartHighlights(part);
+
+                    return (
+                      <button
+                        key={partKey}
+                        type="button"
+                        onClick={() =>
+                          onSelectPart?.(part)
+                        }
+                        className={`
+                          group/part
+                          w-full
+                          border
+                          p-4
+                          text-left
+                          transition-all
+
+                          ${
+                            selected
+                              ? `
+                                border-accent
+                                bg-accent-soft
+                              `
+                              : `
+                                border-border
+                                bg-background/20
+                                hover:border-accent/40
+                                hover:bg-accent-soft/40
+                              `
+                          }
+                        `}
+                      >
+                        {/* NAME + PRICE */}
+
+                        <div
+                          className="flex items-start justify-between gap-4 "
+                        >
+                          <div className="min-w-0">
+                            <p
+                              className="text-sm font-semibold leading-5 font-text text-text"
+                            >
+                              {part.name}
                             </p>
+
+                            <p
+                              className="mt-1 text-xs font-text text-muted"
+                            >
+                              {part.brand}
+                            </p>
+                          </div>
+
+                          <span
+                            className={`
+                              shrink-0
+                              font-mono
+                              text-sm
+                              font-medium
+
+                              ${
+                                selected
+                                  ? "text-accent-dark"
+                                  : "text-text"
+                              }
+                            `}
+                          >
+                            $
+                            {part.price.toFixed(
+                              2,
+                            )}
+                          </span>
+                        </div>
+
+                        {/* SPEC HIGHLIGHTS */}
+
+                        <div
+                          className="
+                            mt-3
+                            flex
+                            flex-wrap
+                            gap-1.5
+                          "
+                        >
+                          {highlights.map(
+                            (highlight) => (
+                              <span
+                                key={
+                                  highlight.label
+                                }
+                                title={
+                                  specDescriptions[
+                                    highlight.label
+                                  ] ??
+                                  highlight.label
+                                }
+                                className="
+                                  inline-flex
+                                  items-center
+                                  border
+                                  border-border/80
+                                  bg-background/70
+                                  px-2
+                                  py-1.5
+                                  font-text
+                                  text-[11px]
+                                  font-medium
+                                  leading-none
+                                  text-muted
+                                "
+                              >
+                                {
+                                  highlight.value
+                                }
+                              </span>
+                            ),
                           )}
                         </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </SidebarMenuItem>
-              );
-            })}
-          </SidebarMenu>
+
+                        {/* SELECTED INDICATOR */}
+
+                        {selected && (
+                          <div
+                            className="flex items-center gap-2 pt-3 mt-3 border-t border-accent/20"
+                          >
+                            <span
+                              className="
+                                size-1.5
+                                bg-accent
+                              "
+                            />
+
+                            <span
+                              className="text-xs font-medium font-text text-accent-dark"
+                            >
+                              Selected
+                            </span>
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })
+                ) : (
+                  /* SEARCH EMPTY STATE */
+
+                  <div
+                    className="px-4 py-8 text-center border border-dashed border-border"
+                  >
+                    <p
+                      className="text-sm font-medium font-text text-text"
+                    >
+                      No components found
+                    </p>
+
+                    <p
+                      className="mt-1 text-xs font-text text-muted"
+                    >
+                      Try a different search.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </section>
+          )}
         </SidebarGroup>
       </SidebarContent>
 
-      {/* The edge rail provides a large, discoverable desktop collapse target
-          in addition to the header trigger used to reopen the sidebar. */}
-      <SidebarRail aria-label="Toggle part index" />
+      <SidebarRail aria-label="Toggle parts sidebar" />
     </Sidebar>
   );
 }

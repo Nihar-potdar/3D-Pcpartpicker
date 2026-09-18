@@ -19,7 +19,6 @@ import {
 } from "@/Logic/Compatibility/Compatibility";
 import { savedBuildListSchema } from "@/zod/buildSchema";
 import { useBuildStore } from "@/stores/BuildStore";
-import { prebuilts } from "@/data/PreBuilds";
 
 // Catalog IDs are deliberately translated at the page boundary. The sidebar
 // can keep stable data-oriented keys while the viewport uses more atmospheric,
@@ -360,20 +359,6 @@ export function BuildPage() {
                 ))}
               </div>
             )}
-            <button
-              onClick={() => {
-                const prebuilt = prebuilts[0];
-
-                const loaded = installIfCompatible(prebuilt.build);
-
-                if (loaded) {
-                  setPreviewPart(null);
-                  toast(`Loaded ${prebuilt.name}`);
-                }
-              }}
-            >
-              Load Starter Forge
-            </button>
 
             <BuildViewport
               selectedCategory={

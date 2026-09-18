@@ -5,6 +5,18 @@ import {
   OrbitControls,
   useProgress,
 } from "@react-three/drei";
+import {
+  Box,
+  Check,
+  CircuitBoard,
+  Cpu,
+  Gpu,
+  HardDrive,
+  MemoryStick,
+  PlugZap,
+  Trash2,
+  type LucideIcon,
+} from "lucide-react";
 import { Canvas, useThree } from "@react-three/fiber";
 import { AnimatePresence, motion } from "motion/react";
 import type { BUILD, CompatibleComponent } from "@/data/type";
@@ -20,6 +32,91 @@ type BuildViewportProps = {
   onRemoveDrive: (targetid: string) => void;
   onRemovePart: (targetid: string) => void;
 };
+
+type BuildPartRowProps = {
+  label: string;
+  name?: string;
+  price?: number;
+  icon: LucideIcon;
+  emptyText: string;
+  onRemove?: () => void;
+};
+
+function BuildPartRow({
+  label,
+  name,
+  price,
+  icon: Icon,
+  emptyText,
+  onRemove,
+}: BuildPartRowProps) {
+  const selected = Boolean(name);
+
+  return (
+    <div
+      className={`
+        group flex gap-3 border-b border-border px-4 py-4
+        transition-colors
+        ${selected ? "hover:bg-accent-soft/30" : ""}
+      `}
+    >
+      {/* ICON */}
+
+      <div
+        className={`
+          grid size-9 shrink-0 place-items-center border
+          ${
+            selected
+              ? "border-accent/30 bg-accent-soft text-accent-dark"
+              : "border-border bg-background/50 text-muted"
+          }
+        `}
+      >
+        {selected ? (
+          <Icon className="size-4" />
+        ) : (
+          <Icon className="size-4 opacity-40" />
+        )}
+      </div>
+
+      {/* CONTENT */}
+
+      <div className="flex-1 min-w-0">
+        <p className="text-xs font-medium font-text text-muted">{label}</p>
+
+        {selected ? (
+          <>
+            <p className="mt-1 text-sm font-medium leading-5 font-text text-text">
+              {name}
+            </p>
+
+            {price !== undefined && (
+              <p className="mt-1 font-mono text-xs text-muted">
+                ${price.toFixed(2)}
+              </p>
+            )}
+          </>
+        ) : (
+          <p className="mt-1 text-sm font-text text-muted">{emptyText}</p>
+        )}
+      </div>
+
+      {/* REMOVE */}
+
+      {selected && onRemove && (
+        <button
+          type="button"
+          onClick={onRemove}
+          title={`Remove ${label}`}
+          aria-label={`Remove ${label}`}
+          className="grid transition-all border border-transparent size-8 shrink-0 place-items-center text-muted opacity-60 hover:border-border hover:bg-background hover:text-text group-hover:opacity-100"
+        >
+          <Trash2 className="size-3.5" />
+        </button>
+      )}
+    </div>
+  );
+}
 
 function RendererSettings() {
   const gl = useThree((state) => state.gl);
@@ -50,6 +147,19 @@ export function BuildViewport({
   onRemoveDrive,
   onRemovePart,
 }: BuildViewportProps) {
+  const completedParts = [
+    build.CPU,
+    build.GPU,
+    build.MOTHERBOARD,
+    build.RAM,
+    build.PSU,
+    build.CASE,
+    build.STORAGE.length > 0,
+  ].filter(Boolean).length;
+
+  const totalPartCategories = 7;
+
+  const buildProgress = (completedParts / totalPartCategories) * 100;
   const partsSubtotal =
     (build.CPU?.price ?? 0) +
     (build.GPU?.price ?? 0) +
@@ -173,7 +283,7 @@ export function BuildViewport({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.2 }}
-            className="absolute pointer-events-auto cursor-pointer  bottom-5 left-1/2 w-[calc(100%-2.5rem)] max-w-lg -translate-x-1/2 border border-border bg-surface/85 px-4 py-3 backdrop-blur-md"
+            className="absolute pointer-events-auto cursor-pointer  border  bottom-5 left-1/2 w-[calc(100%-2.5rem)] max-w-lg -translate-x-1/2  border-accent bg-surface/85 px-4 py-3 backdrop-blur-md"
           >
             {selectedPart ? (
               // Product details intentionally stay compact so the canvas remains
@@ -197,10 +307,7 @@ export function BuildViewport({
                   {selectedPartHighlights.map((spec) => (
                     <span
                       key={spec.label}
-                      title={
-                        specDescriptions[spec.label] ??
-                        spec.label
-                      }
+                      title={specDescriptions[spec.label] ?? spec.label}
                       className="
           border border-border
           bg-background/60
@@ -228,119 +335,199 @@ export function BuildViewport({
           </motion.div>
         </AnimatePresence>
       </div>
-      <aside className="build-summary">
-        <h2 className="build-summary-heading">Your build</h2>
-        <div className="build-summary-items">
-          <div className="pt-3 mt-4 border-t border-border">
-            <p className="text-xs text-muted">CPU</p>
-            <p className="mt-1 text-sm wrap-break-word">
-              {build.CPU?.name ?? "No CPU selected"}
-              {build.CPU && (
-                <button
-                  className="build-remove-button"
-                  onClick={() => onRemovePart("CPU")}
-                >
-                  Remove
-                </button>
-              )}
-            </p>
+      <aside
+        className="
+    absolute right-4 top-4
+    flex max-h-[calc(100%-2rem)] w-[320px]
+    flex-col
+    border border-border
+    bg-surface/95
+    backdrop-blur-md
+  "
+      >
+        {/* HEADER */}
+
+        <div className="px-4 py-4 border-b border-border">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h2 className="text-base font-semibold font-text text-text">
+                Your build
+              </h2>
+
+              <p className="mt-1 text-xs font-text text-muted">
+                {completedParts} of {totalPartCategories} categories selected
+              </p>
+            </div>
+
+            <div
+              className="
+          flex items-center gap-1.5
+          border border-accent/20
+          bg-accent-soft
+          px-2 py-1
+          font-text text-xs
+          font-medium text-accent-dark
+        "
+            >
+              <Check className="size-3" />
+              {completedParts}/{totalPartCategories}
+            </div>
           </div>
-          <div className="pt-3 mt-4 border-t border-border">
-            <p className="text-xs text-muted">GPU</p>
-            <p className="mt-1 text-sm wrap-break-word">
-              {build.GPU?.name ?? "No GPU selected"}
-              {build.GPU && (
-                <button
-                  className="build-remove-button"
-                  onClick={() => onRemovePart("GPU")}
-                >
-                  Remove
-                </button>
-              )}
-            </p>
+
+          {/* PROGRESS BAR */}
+
+          <div className="mt-4 h-1.5 overflow-hidden bg-background">
+            <div
+              className="h-full transition-all duration-300 bg-accent"
+              style={{
+                width: `${buildProgress}%`,
+              }}
+            />
           </div>
-          <div className="pt-3 mt-4 border-t border-border">
-            <p className="text-xs text-muted">MOTHERBOARD</p>
-            <p className="mt-1 text-sm wrap-break-word">
-              {build.MOTHERBOARD?.name ?? "No MOTHERBOARD selected"}
-              {build.MOTHERBOARD && (
-                <button
-                  className="build-remove-button"
-                  onClick={() => onRemovePart("MOTHERBOARD")}
-                >
-                  Remove
-                </button>
-              )}
-            </p>
-          </div>
-          <div className="pt-3 mt-4 border-t border-border">
-            <p className="text-xs text-muted">RAM</p>
-            <p className="mt-1 text-sm wrap-break-word">
-              {build.RAM?.name ?? "No RAM selected"}
-              {build.RAM && (
-                <button
-                  className="build-remove-button"
-                  onClick={() => onRemovePart("RAM")}
-                >
-                  Remove
-                </button>
-              )}
-            </p>
-          </div>
-          <div className="pt-3 mt-4 border-t border-border">
-            <p className="text-xs text-muted">PSU</p>
-            <p className="mt-1 text-sm wrap-break-word">
-              {build.PSU?.name ?? "No PSU selected"}
-              {build.PSU && (
-                <button
-                  className="build-remove-button"
-                  onClick={() => onRemovePart("PSU")}
-                >
-                  Remove
-                </button>
-              )}
-            </p>
-          </div>
-          <div className="pt-3 mt-4 border-t border-border">
-            <p className="text-xs text-muted">CASE</p>
-            <p className="mt-1 text-sm wrap-break-word">
-              {build.CASE?.name ?? "No CASE selected"}
-              {build.CASE && (
-                <button
-                  className="build-remove-button"
-                  onClick={() => onRemovePart("CASE")}
-                >
-                  Remove
-                </button>
-              )}
-            </p>
-          </div>
-          <div className="pt-3 mt-4 border-t border-border">
-            <p className="text-xs text-muted">STORAGE</p>
-            <div className="mt-1 text-sm wrap-break-word">
-              {build.STORAGE.length === 0 ? (
-                <p>No Storage Selected</p>
-              ) : (
-                build.STORAGE.map((drive) => (
-                  <div key={drive.instanceId}>
-                    <p>{drive.product.name}</p>
-                    <button
-                      className="build-remove-button"
-                      onClick={() => onRemoveDrive(drive.instanceId)}
-                    >
-                      Remove
-                    </button>
+        </div>
+
+        {/* PART LIST */}
+
+        <div className="flex-1 min-h-0 overflow-y-auto">
+          <BuildPartRow
+            label="Processor"
+            name={build.CPU?.name}
+            price={build.CPU?.price}
+            icon={Cpu}
+            emptyText="Choose a processor"
+            onRemove={build.CPU ? () => onRemovePart("CPU") : undefined}
+          />
+
+          <BuildPartRow
+            label="Graphics"
+            name={build.GPU?.name}
+            price={build.GPU?.price}
+            icon={Gpu}
+            emptyText="Choose a graphics card"
+            onRemove={build.GPU ? () => onRemovePart("GPU") : undefined}
+          />
+
+          <BuildPartRow
+            label="Motherboard"
+            name={build.MOTHERBOARD?.name}
+            price={build.MOTHERBOARD?.price}
+            icon={CircuitBoard}
+            emptyText="Choose a motherboard"
+            onRemove={
+              build.MOTHERBOARD ? () => onRemovePart("MOTHERBOARD") : undefined
+            }
+          />
+
+          <BuildPartRow
+            label="Memory"
+            name={build.RAM?.name}
+            price={build.RAM?.price}
+            icon={MemoryStick}
+            emptyText="Choose memory"
+            onRemove={build.RAM ? () => onRemovePart("RAM") : undefined}
+          />
+
+          <BuildPartRow
+            label="Power supply"
+            name={build.PSU?.name}
+            price={build.PSU?.price}
+            icon={PlugZap}
+            emptyText="Choose a power supply"
+            onRemove={build.PSU ? () => onRemovePart("PSU") : undefined}
+          />
+
+          <BuildPartRow
+            label="Case"
+            name={build.CASE?.name}
+            price={build.CASE?.price}
+            icon={Box}
+            emptyText="Choose a case"
+            onRemove={build.CASE ? () => onRemovePart("CASE") : undefined}
+          />
+
+          {/* STORAGE */}
+
+          <div className="px-4 py-4 border-b border-border">
+            <div className="flex gap-3">
+              <div
+                className={`
+            grid size-9 shrink-0 place-items-center border
+            ${
+              build.STORAGE.length > 0
+                ? "border-accent/30 bg-accent-soft text-accent-dark"
+                : "border-border bg-background/50 text-muted"
+            }
+          `}
+              >
+                <HardDrive
+                  className={`size-4 ${
+                    build.STORAGE.length === 0 ? "opacity-40" : ""
+                  }`}
+                />
+              </div>
+
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-medium font-text text-muted">
+                  Storage
+                </p>
+
+                {build.STORAGE.length === 0 ? (
+                  <p className="mt-1 text-sm font-text text-muted">
+                    Choose storage
+                  </p>
+                ) : (
+                  <div className="mt-2 space-y-3">
+                    {build.STORAGE.map((drive) => (
+                      <div
+                        key={drive.instanceId}
+                        className="flex items-start justify-between gap-3 "
+                      >
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium leading-5 font-text text-text">
+                            {drive.product.name}
+                          </p>
+
+                          <p className="mt-1 font-mono text-xs text-muted">
+                            ${drive.product.price.toFixed(2)}
+                          </p>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => onRemoveDrive(drive.instanceId)}
+                          title="Remove storage"
+                          aria-label={`Remove ${drive.product.name}`}
+                          className="grid transition-colors size-8 shrink-0 place-items-center text-muted hover:bg-background hover:text-text"
+                        >
+                          <Trash2 className="size-3.5" />
+                        </button>
+                      </div>
+                    ))}
                   </div>
-                ))
-              )}
+                )}
+              </div>
             </div>
           </div>
         </div>
-        <div className="build-summary-total">
-          <span className="text-sm text-muted">Total</span>
-          <span className="font-mono text-lg font-semibold text-text">
-            ${totalPrice.toFixed(2)}
-          </span>
+
+        {/* TOTAL */}
+
+        <div
+          className="px-4 py-4 border-t shrink-0 border-border bg-surface"
+        >
+          <div className="flex items-end justify-between gap-4">
+            <div>
+              <p className="text-xs font-text text-muted">Estimated total</p>
+
+              <p className="mt-1 font-text text-[11px] text-muted">
+                Current configuration
+              </p>
+            </div>
+
+            <span className="font-mono text-xl font-semibold text-text">
+              ${totalPrice.toFixed(2)}
+            </span>
+          </div>
         </div>
       </aside>
     </section>
