@@ -39,10 +39,11 @@ export function BuildPage() {
   const [previewPart, setPreviewPart] = useState<CompatibleComponent | null>(
     null,
   );
-  const [build, setBuild] = useState<BUILD>({ STORAGE: [] });  // whole Build state
-  const builds = useBuildStore((state) => state.build)
-  console.log("Zustand Build", builds)
-  const expandCategory = useSidebarStore((state) => state.openCategory);  // Zustand
+  // Zustand Build State
+  const build = useBuildStore((state) => state.build);
+  const setBuild = useBuildStore((state) => state.setBuild);
+
+  const expandCategory = useSidebarStore((state) => state.openCategory); // Zustand
   // Saved Build State
   const [savedBuilds, setSavedBuilds] = useState<SavedBuild[]>(() => {
     try {
@@ -59,7 +60,6 @@ export function BuildPage() {
     }
   });
   const [buildName, setBuildName] = useState("");
-
 
   // Local-Storage
   useEffect(() => {
@@ -235,7 +235,6 @@ export function BuildPage() {
       toast("remove all drives before removing your motherboard");
       return;
     }
-
 
     setBuild((prevBuild) => ({
       ...prevBuild,
