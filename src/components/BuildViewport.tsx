@@ -8,7 +8,9 @@ import { AnimatePresence, motion } from "motion/react";
 import type { BUILD, CompatibleComponent } from "@/data/type";
 import { Suspense } from "react";
 import { PcAssembly } from "./PcAssembly";
-/** Data supplied by the Build page to keep Three.js independent of routing. */
+
+
+
 type BuildViewportProps = {
   selectedCategory: string;
   selectedPart: CompatibleComponent | null;
@@ -16,20 +18,6 @@ type BuildViewportProps = {
   onRemoveDrive: (targetid: string) => void;
   onRemovePart: (targetid: string) => void;
 };
-
-/**
- * Hosts the large 3D assembly area and its HTML information overlay.
- *
- * React Three Fiber owns the WebGL canvas, Drei provides the infinite grid and
- * orbit controls, and Motion animates only the selected-part readout. Product
- * data is read-only here; persistence and compatibility belong to build logic.
- *
- * @param {BuildViewportProps} props - Human-readable active category and the
- * optional product currently being inspected.
- * @returns {JSX.Element} An orbitable 3D viewport with accessible status text.
- * @throws {Error} WebGL context or Three.js render failures may propagate to the
- * nearest React error boundary on unsupported devices.
- */
 
 export function BuildViewport({
   selectedCategory,
@@ -87,7 +75,11 @@ export function BuildViewport({
           }
         >
           <Center>
-           <PcAssembly/>
+
+
+           <PcAssembly />
+
+
           </Center>
         </Suspense>
 
