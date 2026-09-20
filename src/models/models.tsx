@@ -8,9 +8,9 @@ const BASE = import.meta.env.BASE_URL;
 type ModelProps = ThreeElements["group"];
 
 useGLTF.preload(`${BASE}models/nvidia_rtx_2080_ti.glb`);
-useGLTF.preload(`${BASE}/models/corsair_400d.glb`);
+useGLTF.preload(`${BASE}models/corsair_400d.glb`);
 useGLTF.preload(`${BASE}models/psu_power_supply_unit.glb`);
-useGLTF.preload(`${BASE}/models/motherboard__components.glb`);
+useGLTF.preload(`${BASE}models/motherboard__components.glb`);
 
 export function Case(props: ModelProps) {
   const { scene } = useGLTF(`${BASE}models/corsair_400d.glb`);
@@ -41,7 +41,7 @@ export function Case(props: ModelProps) {
   
   return (
     <group {...props}>
-      <primitive object={scene} scale={10} position={[0, -1.8, 0]} />
+      <Clone object={scene} scale={10} position={[0, -1.8, 0]} />
     </group>
   );
 }
