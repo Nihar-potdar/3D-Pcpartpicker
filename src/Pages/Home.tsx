@@ -409,7 +409,7 @@ export function Home() {
             </motion.div>
           </motion.section>
 
-          <Footer variant="home" selectedComponent=""/>
+          <Footer variant="home" selectedComponent=""a/>
         </main>
       </div>
     </MotionConfig>

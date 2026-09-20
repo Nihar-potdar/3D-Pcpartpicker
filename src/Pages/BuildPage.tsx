@@ -11,8 +11,9 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
-import { AnimatePresence, motion, MotionConfig } from "motion/react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { AnimatePresence, motion, MotionConfig, useDragControls } from "motion/react";
 import { toast } from "sonner";
 
 import { BuildViewport } from "@/components/BuildViewport";
@@ -100,7 +101,9 @@ type MobilePartsPanelProps = {
   searchQuery: string;
   setSearchQuery: (value: string) => void;
   selectedPartKey?: string;
+  installedDrives: InstalledDrive[];
   chooseProduct: (part: CompatibleComponent) => void;
+  addStorage: (part: CompatibleComponent) => void;
 };
 
 function MobilePartsPanel({
@@ -109,7 +112,9 @@ function MobilePartsPanel({
   searchQuery,
   setSearchQuery,
   selectedPartKey,
+  installedDrives,
   chooseProduct,
+  addStorage,
 }: MobilePartsPanelProps) {
   return (
     <>
@@ -127,56 +132,86 @@ function MobilePartsPanel({
         <AnimatePresence mode="popLayout">
           {filteredParts.map((part, index) => {
             const key = `${part.componentType}-${part.id}`;
-            const selected = selectedPartKey === key;
+            const selected = part.componentType === "Storage"
+              ? installedDrives.some((drive) => drive.product.id === part.id)
+              : selectedPartKey === key;
             const specs = getPartHighlights(part)
               .slice(0, 4)
               .map((item) => item.value);
 
             return (
-              <motion.button
+              <motion.div
                 key={key}
                 layout
                 initial={{ opacity: 0, x: -8 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 8 }}
-                whileTap={{ scale: 0.985 }}
-                onClick={() => chooseProduct(part)}
-                className={`w-full border-l-2 px-4 py-4 text-left ${
-                  selected
-                    ? "accent-glow border-accent bg-surface"
-                    : "border-transparent border-b border-b-border hover:bg-surface"
-                }`}
+                transition={{ duration: 0.16 }}
               >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="min-w-0">
-                    <p className="font-mono text-[8px] uppercase tracking-[0.2em] text-muted">
-                      PART_{String(index + 1).padStart(2, "0")}
-                    </p>
-                    <p className="mt-1 text-base italic font-bold leading-5 uppercase font-display">
-                      {part.name}
-                    </p>
-                    <p className="mt-2 font-mono text-[9px] uppercase leading-5 text-muted">
-                      {specs.join(" / ")}
-                    </p>
-                  </div>
+                <motion.button
+                  type="button"
+                  aria-pressed={selected}
+                  aria-label={`${selected ? "Remove" : "Select"} ${part.name}`}
+                  onClick={() => chooseProduct(part)}
+                  whileTap={{ scale: 0.985 }}
+                  transition={{ duration: 0.12 }}
+                  className={`w-full border-l-2 px-4 py-4 text-left ${
+                    selected
+                      ? "accent-glow border-accent bg-surface"
+                      : "border-transparent border-b border-b-border hover:bg-surface"
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                      <p className="font-mono text-[8px] uppercase tracking-[0.2em] text-muted">
+                        PART_{String(index + 1).padStart(2, "0")}
+                      </p>
+                      <p className="mt-1 text-base italic font-bold leading-5 uppercase font-display">
+                        {part.name}
+                      </p>
+                      <p className="mt-2 font-mono text-[9px] uppercase leading-5 text-muted">
+                        {specs.join(" / ")}
+                      </p>
+                    </div>
 
-                  <div className="flex flex-col items-end gap-2 shrink-0">
-                    <span className="font-mono text-sm font-bold">
-                      ${part.price.toFixed(2)}
-                    </span>
+                    <div className="flex flex-col items-end gap-2 shrink-0">
+                      <span className="font-mono text-sm font-bold">
+                        ${part.price.toFixed(2)}
+                      </span>
 
-                    {selected && (
-                      <motion.span
-                        initial={{ scale: 0.4, rotate: -30 }}
-                        animate={{ scale: 1, rotate: 0 }}
-                        className="grid text-white size-6 place-items-center bg-accent"
-                      >
-                        <Check className="size-3.5" />
-                      </motion.span>
-                    )}
+                      {part.componentType === "Storage" && (
+                        <span className="font-mono text-[9px] uppercase text-accent-dark">
+                          {installedDrives.filter((drive) => drive.product.id === part.id).length} installed · {selected ? "Remove one" : "Add drive"}
+                        </span>
+                      )}
+
+                      <AnimatePresence>
+                        {selected && (
+                          <motion.span
+                            initial={{ opacity: 0, scale: 0.4, rotate: -30 }}
+                            animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                            exit={{ opacity: 0, scale: 0.5, rotate: 20 }}
+                            transition={{ duration: 0.15 }}
+                            className="grid text-white size-6 place-items-center bg-accent"
+                          >
+                            <Check className="size-3.5" />
+                          </motion.span>
+                        )}
+                      </AnimatePresence>
+                    </div>
                   </div>
-                </div>
-              </motion.button>
+                </motion.button>
+                {part.componentType === "Storage" && selected && (
+                  <button
+                    type="button"
+                    onClick={() => addStorage(part)}
+                    aria-label={`Add another ${part.name}`}
+                    className="w-full min-h-11 border-b border-border px-4 py-2 text-left font-mono text-[10px] uppercase text-accent-dark hover:bg-accent-soft"
+                  >
+                    + Add another
+                  </button>
+                )}
+              </motion.div>
             );
           })}
         </AnimatePresence>
@@ -207,6 +242,7 @@ type MobileBuildPanelProps = {
   deleteSavedBuild: (id: string) => void;
   removePart: (category: Category) => void;
   removeDrive: (id: string) => void;
+  resetBuild: () => void;
 };
 
 function MobileBuildPanel({
@@ -214,6 +250,7 @@ function MobileBuildPanel({
   totalPrice,
   buildName,
   setBuildName,
+  resetBuild,
   saveBuild,
   savedBuilds,
   loadBuild,
@@ -251,6 +288,13 @@ function MobileBuildPanel({
             className="px-5 text-xs italic font-bold text-white uppercase cut-corner bg-accent font-display"
           >
             Save
+          </motion.button>
+           <motion.button
+            whileTap={{ scale: 0.94 }}
+            onClick={resetBuild}
+            className="px-5 text-xs italic font-bold text-white uppercase cut-corner bg-accent font-display"
+          >
+            Reset
           </motion.button>
         </div>
 
@@ -362,6 +406,10 @@ function MobileBuildPanel({
 }
 
 export function BuildPage() {
+  const [searchParams] = useSearchParams();
+  const panelDragControls = useDragControls();
+  const buildNameInput = useRef<HTMLInputElement>(null);
+  const savedBuildsBar = useRef<HTMLDivElement>(null);
   const [catalogCategory, setCatalogCategory] = useState("cpu");
   const [previewPart, setPreviewPart] = useState<CompatibleComponent | null>(
     null,
@@ -369,7 +417,7 @@ export function BuildPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [buildName, setBuildName] = useState("");
   const [mobilePanel, setMobilePanel] = useState<"parts" | "build" | null>(
-    null,
+    searchParams.get("panel") === "build" ? "build" : null,
   );
 
   const build = useBuildStore((state) => state.build);
@@ -395,8 +443,16 @@ export function BuildPage() {
     componentGroups.find((group) => group.id === catalogCategory) ??
     componentGroups[0]!;
 
-  const selectedPartKey = previewPart
-    ? `${previewPart.componentType}-${previewPart.id}`
+  const installedPart = {
+    cpu: build.CPU,
+    gpu: build.GPU,
+    motherboard: build.MOTHERBOARD,
+    ram: build.RAM,
+    psu: build.PSU,
+    case: build.CASE,
+  }[catalogCategory];
+  const selectedPartKey = installedPart
+    ? `${installedPart.componentType}-${installedPart.id}`
     : undefined;
 
   const filteredParts = useMemo(() => {
@@ -570,6 +626,21 @@ export function BuildPage() {
   }
 
   function chooseProduct(part: CompatibleComponent) {
+    if (part.componentType === "Storage") {
+      const drive = build.STORAGE.find((drive) => drive.product.id === part.id);
+      if (drive) {
+        removeDrive(drive.instanceId);
+        setPreviewPart(null);
+        return;
+      }
+    } else {
+      const category = part.componentType.toUpperCase() as Exclude<Category, "STORAGE">;
+      if (build[category]?.id === part.id) {
+        if (removePart(category)) setPreviewPart(null);
+        return;
+      }
+    }
+
     setPreviewPart(part);
     installPart(part);
   }
@@ -577,13 +648,14 @@ export function BuildPage() {
   function removePart(category: Category) {
     if (category === "MOTHERBOARD" && build.STORAGE.length > 0) {
       toast("Remove all drives before removing your motherboard.");
-      return;
+      return false;
     }
 
     setBuild((previous) => ({
       ...previous,
       [category]: undefined,
     }));
+    return true;
   }
 
   function removeDrive(id: string) {
@@ -591,6 +663,12 @@ export function BuildPage() {
       ...previous,
       STORAGE: previous.STORAGE.filter((drive) => drive.instanceId !== id),
     }));
+  }
+
+  function resetBuild() {
+    setBuild(() =>({ 
+      STORAGE: [],
+    }))
   }
 
   function saveBuild() {
@@ -626,29 +704,358 @@ export function BuildPage() {
   }
 
   return (
-    <MotionConfig reducedMotion="user">
-      <div className="flex flex-col overflow-hidden h-dvh bg-background text-text">
-        <NavBar variant="build" />
+  <MotionConfig reducedMotion="user">
+    <div className="flex h-dvh flex-col overflow-hidden bg-background text-text">
+      <NavBar
+        variant="build"
+        onOpenSaved={() => {
+          if (window.matchMedia("(min-width: 1024px)").matches) {
+            (
+              savedBuildsBar.current?.querySelector("button") ??
+              buildNameInput.current
+            )?.focus();
+          } else {
+            setMobilePanel("build");
+          }
+        }}
+      />
 
-        {/* MOBILE */}
-        <div className="flex flex-col flex-1 min-h-0 lg:hidden">
-          <div className="px-4 py-3 border-b shrink-0 border-border">
-            <p className="font-mono text-[8px] uppercase tracking-[0.24em] text-accent-dark">
-              Garage / Build_01
-            </p>
+      {/* ========================= */}
+      {/* MOBILE HEADER */}
+      {/* ========================= */}
 
-            <div className="flex items-end justify-between gap-3 mt-1">
-              <h1 className="text-xl italic font-bold uppercase font-display">
-                Build your machine
-              </h1>
+      <div className="shrink-0 border-b border-border px-4 py-3 lg:hidden">
+        <p className="font-mono text-[8px] uppercase tracking-[0.24em] text-accent-dark">
+          Garage / Build_01
+        </p>
 
-              <span className="font-mono text-xs font-bold shrink-0 text-accent-dark">
-                ${totalPrice.toFixed(2)}
-              </span>
+        <div className="mt-1 flex items-end justify-between gap-3">
+          <h1 className="text-xl italic font-bold uppercase font-display">
+            Build your machine
+          </h1>
+
+          <span className="shrink-0 font-mono text-xs font-bold text-accent-dark">
+            ${totalPrice.toFixed(2)}
+          </span>
+        </div>
+      </div>
+
+      {/* ========================= */}
+      {/* DESKTOP HEADER */}
+      {/* ========================= */}
+
+      <header className="hidden shrink-0 items-center justify-between border-b border-border bg-surface px-8 py-4 lg:flex">
+        <div>
+          <p className="font-mono text-[9px] uppercase tracking-[0.3em] text-accent-dark">
+            Garage / Build_01
+          </p>
+
+          <h1 className="mt-1 font-display text-3xl font-bold uppercase italic tracking-[-0.04em]">
+            Build your machine
+          </h1>
+        </div>
+
+        <div className="flex items-end gap-3">
+          <label className="flex flex-col gap-1">
+            <span className="font-mono text-[9px] uppercase tracking-[0.18em] text-muted">
+              Build name
+            </span>
+
+            <input
+              ref={buildNameInput}
+              value={buildName}
+              onChange={(event) => setBuildName(event.target.value)}
+              placeholder="UNTITLED BUILD"
+              className="h-10 w-52 border border-border bg-background px-3 font-mono text-xs uppercase outline-none focus:border-accent"
+            />
+          </label>
+
+          <motion.button
+            type="button"
+            onClick={saveBuild}
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.94 }}
+            className="cut-corner h-10 bg-accent px-6 text-sm italic font-bold uppercase text-white accent-glow font-display"
+          >
+            Save
+          </motion.button>
+
+          <motion.button
+            type="button"
+            onClick={resetBuild}
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.94 }}
+            className="cut-corner h-10 bg-accent px-6 text-sm italic font-bold uppercase text-white accent-glow font-display"
+          >
+            Reset
+          </motion.button>
+        </div>
+      </header>
+
+      {/* ========================= */}
+      {/* MAIN LAYOUT */}
+      {/* ========================= */}
+
+      <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
+
+        {/* ========================= */}
+        {/* DESKTOP PARTS SIDEBAR */}
+        {/* ========================= */}
+
+        <aside className="hidden w-[350px] shrink-0 flex-col border-r border-border bg-surface lg:flex">
+          <div className="border-b border-border py-3">
+            {componentGroups.map((component, index) => {
+              const Icon = component.icon;
+              const active = component.id === catalogCategory;
+
+              return (
+                <button
+                  key={component.id}
+                  type="button"
+                  onClick={() => openCategory(component.id)}
+                  className={`group relative flex w-full items-center gap-4 overflow-hidden px-5 py-3 text-left ${
+                    active
+                      ? "text-white"
+                      : "text-muted hover:text-text"
+                  }`}
+                >
+                  {active && (
+                    <motion.span
+                      layoutId="active-category"
+                      className="absolute inset-0 bg-accent"
+                      transition={{
+                        type: "spring",
+                        stiffness: 420,
+                        damping: 34,
+                      }}
+                    />
+                  )}
+
+                  {!active && (
+                    <span className="absolute inset-0 bg-background opacity-0 transition-opacity group-hover:opacity-100" />
+                  )}
+
+                  <span className="relative z-10 w-6 font-mono text-[10px] opacity-60">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+
+                  <Icon className="relative z-10 size-4 shrink-0" />
+
+                  <span className="relative z-10 text-lg italic font-bold uppercase tracking-wide font-display">
+                    {component.name}
+                  </span>
+
+                  {active && (
+                    <motion.span
+                      initial={{ width: 0 }}
+                      animate={{ width: 32 }}
+                      className="relative z-10 ml-auto h-px bg-white/60"
+                    />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="px-5 pb-4 pt-6">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeGroup.id}
+                initial={{ opacity: 0, x: -14 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 14 }}
+                transition={{ duration: 0.16 }}
+              >
+                <p className="font-mono text-[9px] uppercase tracking-[0.25em] text-accent-dark">
+                  Select / {activeGroup.name}
+                </p>
+
+                <h2 className="mt-2 text-3xl italic font-bold uppercase font-display">
+                  {activeGroup.label}
+                </h2>
+              </motion.div>
+            </AnimatePresence>
+
+            <div className="relative mt-4">
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" />
+
+              <input
+                type="search"
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder={`SEARCH ${activeGroup.name}`}
+                className="h-11 w-full border border-border bg-background pl-10 pr-3 font-mono text-[10px] uppercase tracking-wider outline-none placeholder:text-muted focus:border-accent"
+              />
             </div>
           </div>
 
-          <div className="relative h-[46dvh] min-h-[330px] max-h-[500px] shrink-0 overflow-hidden">
+          {/* DESKTOP PART LIST */}
+          <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-4">
+            <AnimatePresence mode="popLayout">
+              {filteredParts.map((part, index) => {
+                const key = `${part.componentType}-${part.id}`;
+
+                const selected =
+                  part.componentType === "Storage"
+                    ? build.STORAGE.some(
+                        (drive) => drive.product.id === part.id,
+                      )
+                    : selectedPartKey === key;
+
+                const specs = getPartHighlights(part)
+                  .slice(0, 4)
+                  .map((item) => item.value);
+
+                return (
+                  <motion.div
+                    key={key}
+                    layout
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{
+                      opacity: 1,
+                      x: selected ? 5 : 0,
+                    }}
+                    exit={{ opacity: 0, x: 10 }}
+                    transition={{ duration: 0.16 }}
+                  >
+                    <motion.button
+                      type="button"
+                      aria-pressed={selected}
+                      aria-label={`${selected ? "Remove" : "Select"} ${part.name}`}
+                      onClick={() => chooseProduct(part)}
+                      whileHover={{ x: 4 }}
+                      whileTap={{ scale: 0.985 }}
+                      transition={{ duration: 0.12 }}
+                      className={`relative w-full border-l-2 px-4 py-4 text-left ${
+                        selected
+                          ? "accent-glow border-accent bg-background"
+                          : "border-transparent hover:border-accent/40 hover:bg-background/70"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="min-w-0">
+                          <p className="font-mono text-[8px] uppercase tracking-[0.2em] text-muted">
+                            PART_{String(index + 1).padStart(2, "0")}
+                          </p>
+
+                          <p className="mt-1 text-base italic font-bold uppercase leading-5 font-display">
+                            {part.name}
+                          </p>
+
+                          <p className="mt-1 text-xs text-muted">
+                            {part.brand}
+                          </p>
+                        </div>
+
+                        {selected && (
+                          <span className="grid size-6 shrink-0 place-items-center bg-accent text-white">
+                            <Check className="size-3.5" />
+                          </span>
+                        )}
+                      </div>
+
+                      <p className="mt-3 font-mono text-[9px] uppercase leading-5 text-muted">
+                        {specs.join(" / ")}
+                      </p>
+
+                      <div className="mt-3 flex items-end justify-between">
+                        <span className="font-mono text-[9px] uppercase tracking-widest text-muted">
+                          {part.componentType === "Storage"
+                            ? `${build.STORAGE.filter(
+                                (drive) =>
+                                  drive.product.id === part.id,
+                              ).length} installed`
+                            : selected
+                              ? "Remove"
+                              : "Select"}
+                        </span>
+
+                        <span className="font-mono text-sm font-bold">
+                          ${part.price.toFixed(2)}
+                        </span>
+                      </div>
+                    </motion.button>
+
+                    {part.componentType === "Storage" && selected && (
+                      <button
+                        type="button"
+                        onClick={() => installPart(part)}
+                        className="min-h-11 w-full border-b border-border px-4 py-2 text-left font-mono text-[10px] uppercase text-accent-dark hover:bg-accent-soft"
+                      >
+                        + Add another
+                      </button>
+                    )}
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
+          </div>
+        </aside>
+
+        {/* ========================= */}
+        {/* VIEWPORT + RESPONSIVE UI */}
+        {/* ========================= */}
+
+        <main className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto bg-background lg:overflow-hidden">
+
+          {/* DESKTOP SAVED BUILDS */}
+          {savedBuilds.length > 0 && (
+            <div
+              ref={savedBuildsBar}
+              className="hidden shrink-0 items-center gap-2 overflow-x-auto border-b border-border bg-surface px-4 py-2 lg:flex"
+            >
+              <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-muted">
+                Saved builds
+              </span>
+
+              {savedBuilds.map((save) => (
+                <div
+                  key={save.id}
+                  className="flex shrink-0 items-center gap-2 border-l border-border pl-3"
+                >
+                  <span className="text-xs italic font-bold uppercase font-display">
+                    {save.name}
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={() => loadBuild(save)}
+                    className="font-mono text-[9px] uppercase text-accent-dark hover:underline"
+                  >
+                    Load
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => deleteSavedBuild(save.id)}
+                    className="font-mono text-xs text-muted hover:text-danger"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* ================================== */}
+          {/* THE ONLY BUILD VIEWPORT / CANVAS */}
+          {/* ================================== */}
+
+          <div
+            className="
+              relative
+              h-[46dvh]
+              min-h-[330px]
+              max-h-[500px]
+              shrink-0
+              overflow-hidden
+
+              lg:h-auto
+              lg:max-h-none
+              lg:min-h-0
+              lg:flex-1
+            "
+          >
             <BuildViewport
               selectedCategory={
                 categoryNames[catalogCategory] ?? catalogCategory
@@ -659,19 +1066,25 @@ export function BuildPage() {
               onRemovePart={(id) => removePart(id as Category)}
             />
 
-            <div className="absolute z-30 -translate-x-1/2 pointer-events-none bottom-3 left-1/2">
-              <div className="px-3 py-2 text-center border cut-corner border-border bg-background/90 backdrop-blur-md">
+            {/* MOBILE BUILD STATUS */}
+            <div className="pointer-events-none absolute bottom-3 left-1/2 z-30 -translate-x-1/2 lg:hidden">
+              <div className="cut-corner border border-border bg-background/90 px-3 py-2 text-center backdrop-blur-md">
                 <p className="font-mono text-[7px] uppercase tracking-widest text-muted">
                   Build status
                 </p>
-                <p className="mt-0.5 font-display text-sm font-bold italic">
+
+                <p className="mt-0.5 text-sm italic font-bold font-display">
                   {completedParts} / 7 INSTALLED
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="border-t shrink-0 border-border bg-surface">
+          {/* ========================= */}
+          {/* MOBILE CATEGORY BAR */}
+          {/* ========================= */}
+
+          <div className="shrink-0 border-t border-border bg-surface lg:hidden">
             <div className="flex w-full">
               {componentGroups.map((component) => {
                 const Icon = component.icon;
@@ -682,11 +1095,14 @@ export function BuildPage() {
                     key={component.id}
                     onClick={() => openCategory(component.id)}
                     className={`relative flex min-w-0 flex-1 flex-col items-center gap-1 px-1 py-2 ${
-                      active ? "text-accent-dark" : "text-muted"
+                      active
+                        ? "text-accent-dark"
+                        : "text-muted"
                     }`}
                   >
                     <Icon className="size-4" />
-                    <span className="font-mono text-[8px] uppercase tracking-tight">
+
+                    <span className="max-w-full truncate font-mono text-[8px] uppercase tracking-tight">
                       {component.name}
                     </span>
 
@@ -702,7 +1118,11 @@ export function BuildPage() {
             </div>
           </div>
 
-          <div className="px-4 py-3 border-t shrink-0 border-border bg-background">
+          {/* ========================= */}
+          {/* MOBILE CURRENT SELECTION */}
+          {/* ========================= */}
+
+          <div className="shrink-0 border-t border-border bg-background px-4 py-3 lg:hidden">
             <p className="font-mono text-[8px] uppercase tracking-[0.2em] text-muted">
               Current selection
             </p>
@@ -722,8 +1142,9 @@ export function BuildPage() {
               >
                 <div className="flex items-end justify-between gap-4">
                   <div className="min-w-0">
-                    <p className="text-base italic font-bold uppercase truncate font-display">
-                      {previewPart?.name ?? `Choose ${activeGroup.label}`}
+                    <p className="truncate text-base italic font-bold uppercase font-display">
+                      {previewPart?.name ??
+                        `Choose ${activeGroup.label}`}
                     </p>
 
                     {previewPart && (
@@ -737,7 +1158,7 @@ export function BuildPage() {
                   </div>
 
                   {previewPart && (
-                    <span className="font-mono text-sm font-bold shrink-0 text-accent-dark">
+                    <span className="shrink-0 font-mono text-sm font-bold text-accent-dark">
                       ${previewPart.price.toFixed(2)}
                     </span>
                   )}
@@ -746,400 +1167,177 @@ export function BuildPage() {
             </AnimatePresence>
           </div>
 
-          <div className="grid grid-cols-2 gap-px border-t shrink-0 border-border bg-border">
+          {/* MOBILE ACTIONS */}
+
+          <div className="grid shrink-0 grid-cols-2 gap-px border-t border-border bg-border lg:hidden">
             <button
               onClick={() => setMobilePanel("parts")}
-              className="px-4 py-4 text-sm italic font-bold uppercase transition bg-surface font-display active:bg-accent active:text-white"
+              className="bg-surface px-4 py-4 text-sm italic font-bold uppercase font-display active:bg-accent active:text-white"
             >
               Parts
             </button>
 
             <button
               onClick={() => setMobilePanel("build")}
-              className="px-4 py-4 text-sm italic font-bold text-white uppercase bg-accent font-display"
+              className="bg-accent px-4 py-4 text-sm italic font-bold uppercase text-white font-display"
             >
               Build · {completedParts}/7
             </button>
           </div>
 
-          <AnimatePresence>
-            {mobilePanel && (
-              <>
-                <motion.button
-                  aria-label="Close panel"
-                  onClick={() => setMobilePanel(null)}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="fixed inset-0 z-40 bg-black/55 backdrop-blur-[2px]"
-                />
+          {/* ========================= */}
+          {/* DESKTOP CURRENT SELECTION */}
+          {/* ========================= */}
 
-                <motion.div
-                  initial={{ y: "100%" }}
-                  animate={{ y: 0 }}
-                  exit={{ y: "100%" }}
-                  transition={{ type: "spring", stiffness: 360, damping: 34 }}
-                  className="fixed inset-x-0 bottom-0 z-50 flex max-h-[78dvh] flex-col border-t border-border bg-background"
-                >
-                  <div className="flex items-center justify-between px-4 py-3 border-b shrink-0 border-border">
-                    <div>
-                      <p className="font-mono text-[8px] uppercase tracking-[0.22em] text-accent-dark">
-                        {mobilePanel === "parts"
-                          ? "Parts index"
-                          : "Build status"}
-                      </p>
-
-                      <h2 className="mt-1 text-xl italic font-bold uppercase font-display">
-                        {mobilePanel === "parts"
-                          ? activeGroup.label
-                          : "Your machine"}
-                      </h2>
-                    </div>
-
-                    <button
-                      onClick={() => setMobilePanel(null)}
-                      className="grid transition border size-9 place-items-center border-border text-muted hover:border-accent hover:text-text"
-                    >
-                      <X className="size-4" />
-                    </button>
-                  </div>
-
-                  {mobilePanel === "parts" ? (
-                    <MobilePartsPanel
-                      activeGroup={activeGroup}
-                      filteredParts={filteredParts}
-                      searchQuery={searchQuery}
-                      setSearchQuery={setSearchQuery}
-                      selectedPartKey={selectedPartKey}
-                      chooseProduct={(part) => {
-                        chooseProduct(part);
-                        setMobilePanel(null);
-                      }}
-                    />
-                  ) : (
-                    <MobileBuildPanel
-                      build={build}
-                      totalPrice={totalPrice}
-                      buildName={buildName}
-                      setBuildName={setBuildName}
-                      saveBuild={saveBuild}
-                      savedBuilds={savedBuilds}
-                      loadBuild={loadBuild}
-                      deleteSavedBuild={deleteSavedBuild}
-                      removePart={removePart}
-                      removeDrive={removeDrive}
-                    />
-                  )}
-                </motion.div>
-              </>
-            )}
-          </AnimatePresence>
-        </div>
-
-        {/* DESKTOP */}
-        <div className="flex-col flex-1 hidden min-h-0 lg:flex">
-          <header className="flex items-center justify-between px-8 py-4 border-b shrink-0 border-border bg-surface">
-            <div>
-              <p className="font-mono text-[9px] uppercase tracking-[0.3em] text-accent-dark">
-                Garage / Build_01
+          <div className="hidden shrink-0 items-center justify-between border-t border-border bg-surface px-6 py-3 lg:flex">
+            <div className="min-w-0">
+              <p className="font-mono text-[8px] uppercase tracking-[0.22em] text-muted">
+                Current selection
               </p>
-              <h1 className="mt-1 font-display text-3xl font-bold uppercase italic tracking-[-0.04em]">
-                Build your machine
-              </h1>
-            </div>
 
-            <div className="flex items-end gap-3">
-              <label className="flex flex-col gap-1">
-                <span className="font-mono text-[9px] uppercase tracking-[0.18em] text-muted">
-                  Build name
-                </span>
-
-                <input
-                  value={buildName}
-                  onChange={(event) => setBuildName(event.target.value)}
-                  placeholder="UNTITLED BUILD"
-                  className="h-10 px-3 font-mono text-xs uppercase border outline-none w-52 border-border bg-background focus:border-accent"
-                />
-              </label>
-
-              <motion.button
-                type="button"
-                onClick={saveBuild}
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.94 }}
-                className="h-10 px-6 text-sm italic font-bold text-white uppercase accent-glow cut-corner bg-accent font-display"
-              >
-                Save
-              </motion.button>
-            </div>
-          </header>
-
-          <div className="flex flex-1 min-h-0">
-            <aside className="flex w-[350px] shrink-0 flex-col border-r border-border bg-surface">
-              <div className="py-3 border-b border-border">
-                {componentGroups.map((component, index) => {
-                  const Icon = component.icon;
-                  const active = component.id === catalogCategory;
-
-                  return (
-                    <button
-                      key={component.id}
-                      type="button"
-                      onClick={() => openCategory(component.id)}
-                      className={`group relative flex w-full items-center gap-4 overflow-hidden px-5 py-3 text-left ${
-                        active ? "text-white" : "text-muted hover:text-text"
-                      }`}
-                    >
-                      {active && (
-                        <motion.span
-                          layoutId="active-category"
-                          className="absolute inset-0 bg-accent"
-                          transition={{
-                            type: "spring",
-                            stiffness: 420,
-                            damping: 34,
-                          }}
-                        />
-                      )}
-
-                      {!active && (
-                        <span className="absolute inset-0 transition-opacity opacity-0 bg-background group-hover:opacity-100" />
-                      )}
-
-                      <span className="relative z-10 w-6 font-mono text-[10px] opacity-60">
-                        {String(index + 1).padStart(2, "0")}
-                      </span>
-
-                      <Icon className="relative z-10 size-4 shrink-0" />
-
-                      <span className="relative z-10 text-lg italic font-bold tracking-wide uppercase font-display">
-                        {component.name}
-                      </span>
-
-                      {active && (
-                        <motion.span
-                          initial={{ width: 0 }}
-                          animate={{ width: 32 }}
-                          className="relative z-10 h-px ml-auto bg-white/60"
-                        />
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-
-              <div className="px-5 pt-6 pb-4">
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={activeGroup.id}
-                    initial={{ opacity: 0, x: -14 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 14 }}
+              <div className="mt-1 h-6 overflow-hidden">
+                <AnimatePresence mode="wait" initial={false}>
+                  <motion.p
+                    key={
+                      previewPart
+                        ? `${previewPart.componentType}-${previewPart.id}`
+                        : "empty"
+                    }
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -12 }}
                     transition={{ duration: 0.16 }}
+                    className="truncate text-lg italic font-bold uppercase font-display"
                   >
-                    <p className="font-mono text-[9px] uppercase tracking-[0.25em] text-accent-dark">
-                      Select / {activeGroup.name}
-                    </p>
-                    <h2 className="mt-2 text-3xl italic font-bold uppercase font-display">
-                      {activeGroup.label}
-                    </h2>
-                  </motion.div>
-                </AnimatePresence>
-
-                <div className="relative mt-4">
-                  <Search className="absolute -translate-y-1/2 pointer-events-none left-3 top-1/2 size-4 text-muted" />
-
-                  <input
-                    type="search"
-                    value={searchQuery}
-                    onChange={(event) => setSearchQuery(event.target.value)}
-                    placeholder={`SEARCH ${activeGroup.name}`}
-                    className="h-11 w-full border border-border bg-background pl-10 pr-3 font-mono text-[10px] uppercase tracking-wider outline-none placeholder:text-muted focus:border-accent"
-                  />
-                </div>
-              </div>
-
-              <div className="flex-1 min-h-0 px-3 pb-4 overflow-y-auto">
-                <AnimatePresence mode="popLayout">
-                  {filteredParts.map((part, index) => {
-                    const key = `${part.componentType}-${part.id}`;
-                    const selected = selectedPartKey === key;
-                    const specs = getPartHighlights(part)
-                      .slice(0, 4)
-                      .map((item) => item.value);
-
-                    return (
-                      <motion.button
-                        key={key}
-                        layout
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: selected ? 5 : 0 }}
-                        exit={{ opacity: 0, x: 10 }}
-                        whileHover={{ x: selected ? 5 : 4 }}
-                        whileTap={{ scale: 0.985 }}
-                        onClick={() => chooseProduct(part)}
-                        className={`relative w-full border-l-2 px-4 py-4 text-left ${
-                          selected
-                            ? "accent-glow border-accent bg-background"
-                            : "border-transparent hover:border-accent/40 hover:bg-background/70"
-                        }`}
-                      >
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="min-w-0">
-                            <p className="font-mono text-[8px] uppercase tracking-[0.2em] text-muted">
-                              PART_{String(index + 1).padStart(2, "0")}
-                            </p>
-
-                            <p className="mt-1 text-base italic font-bold leading-5 uppercase font-display">
-                              {part.name}
-                            </p>
-
-                            <p className="mt-1 text-xs text-muted">
-                              {part.brand}
-                            </p>
-                          </div>
-
-                          <AnimatePresence>
-                            {selected && (
-                              <motion.span
-                                initial={{
-                                  opacity: 0,
-                                  scale: 0.4,
-                                  rotate: -30,
-                                }}
-                                animate={{ opacity: 1, scale: 1, rotate: 0 }}
-                                exit={{ opacity: 0, scale: 0.5 }}
-                                className="grid text-white size-6 shrink-0 place-items-center bg-accent"
-                              >
-                                <Check className="size-3.5" />
-                              </motion.span>
-                            )}
-                          </AnimatePresence>
-                        </div>
-
-                        <p className="mt-3 font-mono text-[9px] uppercase leading-5 text-muted">
-                          {specs.join(" / ")}
-                        </p>
-
-                        <div className="flex items-end justify-between mt-3">
-                          <span className="font-mono text-[9px] uppercase tracking-widest text-muted">
-                            {selected ? "Installed" : "Select"}
-                          </span>
-
-                          <span className="font-mono text-sm font-bold">
-                            ${part.price.toFixed(2)}
-                          </span>
-                        </div>
-                      </motion.button>
-                    );
-                  })}
+                    {previewPart?.name ?? "Select a component"}
+                  </motion.p>
                 </AnimatePresence>
               </div>
-            </aside>
+            </div>
 
-            <main className="relative flex flex-col flex-1 min-w-0 bg-background">
-              {savedBuilds.length > 0 && (
-                <div className="flex items-center gap-2 px-4 py-2 border-b shrink-0 border-border bg-surface">
-                  <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-muted">
-                    Saved builds
-                  </span>
+            {previewPart && (
+              <div className="text-right">
+                <p className="font-mono text-[8px] uppercase tracking-[0.22em] text-muted">
+                  Price
+                </p>
 
-                  {savedBuilds.map((save) => (
-                    <div
-                      key={save.id}
-                      className="flex items-center gap-2 pl-3 border-l border-border"
-                    >
-                      <span className="text-xs italic font-bold uppercase font-display">
-                        {save.name}
-                      </span>
+                <p className="mt-1 font-mono text-xl font-bold text-accent-dark">
+                  ${previewPart.price.toFixed(2)}
+                </p>
+              </div>
+            )}
+          </div>
+        </main>
+      </div>
 
-                      <button
-                        type="button"
-                        onClick={() => loadBuild(save)}
-                        className="font-mono text-[9px] uppercase text-accent-dark hover:underline"
-                      >
-                        Load
-                      </button>
+      {/* ========================= */}
+      {/* MOBILE DRAWER */}
+      {/* ========================= */}
 
-                      <button
-                        type="button"
-                        onClick={() => deleteSavedBuild(save.id)}
-                        className="font-mono text-xs text-muted hover:text-danger"
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
+      <AnimatePresence>
+        {mobilePanel && (
+          <>
+            <motion.button
+              aria-label="Close panel"
+              onClick={() => setMobilePanel(null)}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-40 bg-black/55 backdrop-blur-[2px] lg:hidden"
+            />
 
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.35 }}
-                className="flex-1 min-h-0 overflow-hidden"
-              >
-                <BuildViewport
-                  mobile
-                  selectedCategory={
-                    categoryNames[catalogCategory] ?? catalogCategory
+            <motion.div
+              drag="y"
+              dragControls={panelDragControls}
+              dragListener={false}
+              dragConstraints={{ top: 0, bottom: 0 }}
+              dragElastic={{ top: 0, bottom: 0.5 }}
+              onDragEnd={(_, info) => {
+                if (
+                  info.offset.y > 80 ||
+                  (info.offset.y > 20 &&
+                    info.velocity.y > 500)
+                ) {
+                  setMobilePanel(null);
+                }
+              }}
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{
+                type: "spring",
+                stiffness: 360,
+                damping: 34,
+              }}
+              className="fixed inset-x-0 bottom-0 z-50 flex h-[78dvh] flex-col border-t border-border bg-background lg:hidden"
+            >
+              <div
+                onPointerDown={(event) => {
+                  if (
+                    !(event.target as HTMLElement).closest(
+                      "button",
+                    )
+                  ) {
+                    panelDragControls.start(event);
                   }
-                  selectedPart={previewPart}
-                  build={build}
-                  onRemoveDrive={removeDrive}
-                  onRemovePart={(id) => removePart(id as Category)}
-                />
-              </motion.div>
+                }}
+                className="relative flex shrink-0 touch-none cursor-grab items-center justify-between border-b border-border px-4 pb-3 pt-6 active:cursor-grabbing"
+              >
+                <span className="absolute left-1/2 top-2 h-1 w-10 -translate-x-1/2 rounded-full bg-muted/40" />
 
-              <div className="flex items-center justify-between px-6 py-3 border-t shrink-0 border-border bg-surface">
-                <div className="min-w-0">
-                  <p className="font-mono text-[8px] uppercase tracking-[0.22em] text-muted">
-                    Current selection
+                <div>
+                  <p className="font-mono text-[8px] uppercase tracking-[0.22em] text-accent-dark">
+                    {mobilePanel === "parts"
+                      ? "Parts index"
+                      : "Build status"}
                   </p>
 
-                  <div className="h-6 mt-1 overflow-hidden">
-                    <AnimatePresence mode="wait" initial={false}>
-                      <motion.p
-                        key={
-                          previewPart
-                            ? `${previewPart.componentType}-${previewPart.id}`
-                            : "empty"
-                        }
-                        initial={{ opacity: 0, y: 12 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -12 }}
-                        transition={{ duration: 0.16 }}
-                        className="text-lg italic font-bold uppercase truncate font-display"
-                      >
-                        {previewPart?.name ?? "Select a component"}
-                      </motion.p>
-                    </AnimatePresence>
-                  </div>
+                  <h2 className="mt-1 text-xl italic font-bold uppercase font-display">
+                    {mobilePanel === "parts"
+                      ? activeGroup.label
+                      : "Your machine"}
+                  </h2>
                 </div>
 
-                <AnimatePresence mode="wait">
-                  {previewPart && (
-                    <motion.div
-                      key={`${previewPart.componentType}-${previewPart.id}-price`}
-                      initial={{ opacity: 0, x: 10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -10 }}
-                      className="text-right"
-                    >
-                      <p className="font-mono text-[8px] uppercase tracking-[0.22em] text-muted">
-                        Price
-                      </p>
-                      <p className="mt-1 font-mono text-xl font-bold text-accent-dark">
-                        ${previewPart.price.toFixed(2)}
-                      </p>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                <button
+                  onClick={() => setMobilePanel(null)}
+                  className="grid size-9 place-items-center border border-border text-muted hover:border-accent hover:text-text"
+                >
+                  <X className="size-4" />
+                </button>
               </div>
-            </main>
-          </div>
-        </div>
-      </div>
-    </MotionConfig>
-  );
+
+              {mobilePanel === "parts" ? (
+                <MobilePartsPanel
+                  activeGroup={activeGroup}
+                  filteredParts={filteredParts}
+                  searchQuery={searchQuery}
+                  setSearchQuery={setSearchQuery}
+                  selectedPartKey={selectedPartKey}
+                  installedDrives={build.STORAGE}
+                  addStorage={installPart}
+                  chooseProduct={chooseProduct}
+                />
+              ) : (
+                <MobileBuildPanel
+                  build={build}
+                  totalPrice={totalPrice}
+                  resetBuild={resetBuild}
+                  buildName={buildName}
+                  setBuildName={setBuildName}
+                  saveBuild={saveBuild}
+                  savedBuilds={savedBuilds}
+                  loadBuild={loadBuild}
+                  deleteSavedBuild={deleteSavedBuild}
+                  removePart={removePart}
+                  removeDrive={removeDrive}
+                />
+              )}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </div>
+  </MotionConfig>
+);
 }

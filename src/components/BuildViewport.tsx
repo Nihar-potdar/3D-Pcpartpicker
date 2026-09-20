@@ -1,5 +1,6 @@
 import {
   Center,
+  Environment,
   Grid,
   Html,
   OrbitControls,
@@ -17,10 +18,10 @@ import {
   Trash2,
   type LucideIcon,
 } from "lucide-react";
-import { Canvas, useThree } from "@react-three/fiber";
+import { Canvas } from "@react-three/fiber";
 import { AnimatePresence, motion } from "motion/react";
 import type { BUILD, CompatibleComponent } from "@/data/type";
-import { Suspense, useEffect } from "react";
+import { Suspense } from "react";
 import { PcAssembly } from "./PcAssembly";
 import { getPartHighlights } from "@/lib/getPartHighlights";
 import { specDescriptions } from "@/data/specDescriptions";
@@ -31,7 +32,6 @@ type BuildViewportProps = {
   build: BUILD;
   onRemoveDrive: (targetid: string) => void;
   onRemovePart: (targetid: string) => void;
-  mobile?: boolean;
 };
 
 type BuildPartRowProps = {
@@ -109,16 +109,6 @@ function BuildPartRow({
   );
 }
 
-function RendererSettings() {
-  const gl = useThree((state) => state.gl);
-
-  useEffect(() => {
-    gl.toneMappingExposure = 1.5;
-  }, [gl]);
-
-  return null;
-}
-
 function ModelLoader() {
   const { progress } = useProgress();
 
@@ -142,7 +132,6 @@ export function BuildViewport({
   build,
   onRemoveDrive,
   onRemovePart,
-  mobile = false,
 }: BuildViewportProps) {
   const completedParts = [
     build.CPU,
@@ -175,18 +164,18 @@ export function BuildViewport({
     : [];
 
   return (
-    <section className="relative h-full min-h-0 overflow-hidden border viewport-vignette build-scene border-border bg-surface">
+    <section className="relative h-full w-full  min-h-0 overflow-hidden border viewport-vignette build-scene border-border bg-surface">
       <Canvas
         shadows
+        gl={{ toneMappingExposure: 1.5, antialias: true, alpha: true }}
         camera={{
           position: [6.5, 3.5, 7.5],
           fov: 38,
         }}
-        dpr={[1, 1.5]}
-        className="w-full h-full"
+        dpr={[1, 1.25]}
+        className="w-full h-full absolute inset-0"
       >
-        <RendererSettings />
-        <ambientLight intensity={0.22} />
+        {/* <hemisphereLight args={["#f4f7ff", "#8b8174", 1.2]} /> */}
 
         {/* MAIN KEY */}
         <directionalLight
@@ -200,29 +189,10 @@ export function BuildViewport({
           shadow-camera-far={25}
           shadow-bias={-0.0005}
         />
+        <Suspense fallback={null}>
+          <Environment resolution={128} preset="studio" />
+        </Suspense>
 
-        {/* SOFT FILL */}
-        <directionalLight
-          position={[-4, 3, 4]}
-          intensity={0.75}
-          color="#d7dbe2"
-        />
-
-        {/* VERY SUBTLE ORANGE RIM */}
-        <pointLight
-          position={[-3, 3.5, -4]}
-          intensity={6}
-          distance={10}
-          decay={2}
-          color="#ff5a1f"
-        />
-        <pointLight
-          position={[0.2, 0.8, 0.6]}
-          intensity={2.5}
-          distance={4}
-          decay={2}
-          color="#ffffff"
-        />
         <Suspense fallback={<ModelLoader />}>
           <Center>
             <PcAssembly />
@@ -234,7 +204,7 @@ export function BuildViewport({
           position={[0, -2.29, 0]}
           receiveShadow
         >
-          <planeGeometry args={[30, 30]} />
+          <planeGeometry args={[30, 30]} />z
           <shadowMaterial transparent opacity={0.2} />
         </mesh>
 
@@ -343,45 +313,26 @@ export function BuildViewport({
         </AnimatePresence>
       </div>
       {/* HEADER */}
-      <aside className="cut-corner sm:block lg:flex hidden absolute right-5 top-5 z-20  max-h-[calc(100%-2.5rem)] w-[310px] flex-col overflow-hidden border border-border bg-background/92 shadow-xl backdrop-blur-md">
-        <div className="px-4 py-4 border-b border-border">
-          <div className="px-4 py-4 border-b border-border">
-            <div className="absolute z-30 pointer-events-none right-3 top-3">
-              <div className="px-3 py-2 border cut-corner border-border bg-background/90 backdrop-blur-md">
-                <p className="font-mono text-[7px] uppercase tracking-widest text-muted">
-                  Build status
-                </p>
-
-                <h2 className="mt-1 text-xl italic font-bold uppercase font-display text-text">
-                  Your machine
-                </h2>
-
-                <p className="mt-0.5 font-display text-sm font-bold italic">
-                  {completedParts}/7
-                </p>
-              </div>
-
-              <div className="flex items-center gap-1.5 border border-accent/30 bg-accent-soft px-2 py-1 font-mono text-[10px] font-bold text-accent-dark">
-                <Check className="size-3" />
-                {completedParts}/{totalPartCategories}
-              </div>
+      <aside className="cut-corner absolute right-5 top-5 z-20 hidden max-h-[calc(100%-2.5rem)] w-[310px] flex-col overflow-hidden border border-border bg-background/92 shadow-xl backdrop-blur-md lg:flex">
+        <div className="px-4 py-4 border-b shrink-0 border-border">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="font-mono text-[7px] uppercase tracking-widest text-muted">
+                Build status
+              </p>
+              <h2 className="mt-1 text-xl italic font-bold uppercase font-display text-text">
+                Your machine
+              </h2>
             </div>
-
-            <div className="mt-4 h-[3px] bg-surface">
-              <div
-                className="h-full transition-all duration-300 bg-accent"
-                style={{ width: `${buildProgress}%` }}
-              />
+            <div className="flex items-center gap-1.5 border border-accent/30 bg-accent-soft px-2 py-1 font-mono text-[10px] font-bold text-accent-dark">
+              <Check className="size-3" />
+              {completedParts}/{totalPartCategories}
             </div>
           </div>
-          {/* PROGRESS BAR */}
-
           <div className="mt-4 h-1.5 overflow-hidden bg-background">
             <div
               className="h-full transition-all duration-300 bg-accent"
-              style={{
-                width: `${buildProgress}%`,
-              }}
+              style={{ width: `${buildProgress}%` }}
             />
           </div>
         </div>

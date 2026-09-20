@@ -11,7 +11,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
  * page, preventing the footer-like module label from rendering as undefined.
  */
 type NavBarProps =
-  | { variant: "home" | "build" }
+  | { variant: "home" | "build"; onOpenSaved?: () => void }
   | { variant: "guides" }
   | { variant: "guide-detail"; moduleNumber: string };
 
@@ -47,7 +47,9 @@ export function NavBar(props: NavBarProps) {
 
         <div className="flex items-center gap-3">
           {isBuild ? (
-            "hi"
+            <Link to="/" aria-label="Return to home" className="grid size-9 place-items-center border border-border text-muted hover:bg-accent-soft hover:text-text">
+              <ArrowLeft className="size-4" />
+            </Link>
           ) : (
             <Link
               to="/"
@@ -93,6 +95,7 @@ export function NavBar(props: NavBarProps) {
 
           <Link
             to="/prebuilts"
+            aria-label="Prebuilts"
             className="flex items-center gap-2 nav-link"
           >
             <GitCompareArrows className="size-4" />
@@ -102,16 +105,21 @@ export function NavBar(props: NavBarProps) {
 
           {/* SAVED BUILDS */}
 
-          <motion.button
-            type="button"
-            whileHover={{ y: -2 }}
-            whileTap={{ scale: 0.96 }}
+          <Link
+            to="/build?panel=build"
+            aria-label="Saved builds"
+            onClick={(event) => {
+              if (props.onOpenSaved) {
+                event.preventDefault();
+                props.onOpenSaved();
+              }
+            }}
             className="flex items-center gap-2 nav-link"
           >
             <Bookmark className="size-4" />
 
             <span className="hidden sm:inline">Saved</span>
-          </motion.button>
+          </Link>
 
           {/* BUILD */}
 

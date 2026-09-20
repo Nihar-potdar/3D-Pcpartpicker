@@ -57,8 +57,6 @@ body::before {
   pointer-events: none;
   z-index: 9999;
   opacity: 0.025;
-  background-image: url("/noise.png");
-  background-repeat: repeat;
 }
 
 /* Setting the document background prevents uncovered browser space from
@@ -416,16 +414,6 @@ body {
   }
   .build-name-field input {
     width: 100%;
-  }
-  .build-scene {
-    overflow-y: auto;
-  }
-  .build-scene > div:first-child {
-    height: 20rem !important;
-  }
-  .build-scene > .pointer-events-none {
-    height: 20rem;
-    bottom: auto;
   }
   .build-summary {
     position: relative;
