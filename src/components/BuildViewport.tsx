@@ -204,7 +204,7 @@ export function BuildViewport({
           position={[0, -2.29, 0]}
           receiveShadow
         >
-          <planeGeometry args={[30, 30]} />z
+          <planeGeometry args={[30, 30]} />
           <shadowMaterial transparent opacity={0.2} />
         </mesh>
 

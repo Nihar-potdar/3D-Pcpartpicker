@@ -1,0 +1,19 @@
+(defcfg
+  process-unmapped-keys yes
+)
+
+(defsrc
+  caps h j k l b w u o d x
+)
+
+(defalias
+  nav (tap-hold 200 200 esc (layer-while-held nav))
+)
+
+(deflayer base
+  @nav _ _ _ _ _ _ _ _ _ _
+)
+
+(deflayer nav
+  _ left down up right C-left C-right home end delete bspc
+)
