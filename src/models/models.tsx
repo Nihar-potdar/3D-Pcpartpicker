@@ -26,7 +26,7 @@ export function Case(props: ModelProps) {
 
         if (material instanceof THREE.MeshStandardMaterial) {
           material.transparent = true;
-          material.opacity = 0.12;
+          material.opacity = 0;
           material.depthWrite = false;
         }
 

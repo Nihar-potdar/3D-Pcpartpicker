@@ -167,7 +167,7 @@ export function BuildViewport({
     <section className="relative h-full w-full  min-h-0 overflow-hidden border viewport-vignette build-scene border-border bg-surface">
       <Canvas
         shadows
-        gl={{ toneMappingExposure: 1.5, antialias: true, alpha: true }}
+        gl={{ toneMappingExposure: 1.2, antialias: true, alpha: true }}
         camera={{
           position: [6.5, 3.5, 7.5],
           fov: 38,
