@@ -876,88 +876,93 @@ export function BuildPage() {
           {/* ========================= */}
 
           <aside className="hidden min-h-0 w-[350px] shrink-0 flex-col overflow-hidden border-r border-border bg-surface lg:flex">
-            <div className="shrink-0 border-b border-border py-3 [@media(max-height:800px)]:py-1 [@media(max-height:700px)]:py-0.5">
-              {componentGroups.map((component, index) => {
-                const Icon = component.icon;
-                const active = component.id === catalogCategory;
+            {/* DESKTOP CATEGORY GRID */}
+            <div className="shrink-0 border-b border-border bg-border">
+              <div className="grid grid-cols-2 gap-px">
+                {componentGroups.map((component, index) => {
+                  const Icon = component.icon;
+                  const active = component.id === catalogCategory;
 
-                return (
-                  <button
-                    key={component.id}
-                    type="button"
-                    onClick={() => openCategory(component.id)}
-                    className={`group relative flex w-full items-center gap-4 overflow-hidden px-5 py-3 text-left
-                      [@media(max-height:800px)]:gap-3 [@media(max-height:800px)]:py-2
-                      [@media(max-height:700px)]:gap-2 [@media(max-height:700px)]:py-1.5
-                      ${active ? "text-white" : "text-muted hover:text-text"}`}
-                  >
-                    {active && (
-                      <motion.span
-                        layoutId="active-category"
-                        className="absolute inset-0 bg-accent"
-                        transition={{
-                          type: "spring",
-                          stiffness: 420,
-                          damping: 34,
-                        }}
+                  return (
+                    <motion.button
+                      key={component.id}
+                      type="button"
+                      onClick={() => openCategory(component.id)}
+                      whileTap={{ scale: 0.98 }}
+                      className={`
+            group relative flex min-h-[58px] items-center gap-3
+            overflow-hidden px-4 py-3 text-left
+            transition-colors
+
+            ${
+              active
+                ? "text-white"
+                : "bg-surface text-muted hover:bg-background hover:text-text"
+            }
+          `}
+                    >
+                      {/* ACTIVE BACKGROUND */}
+                      {active && (
+                        <motion.span
+                          layoutId="active-category"
+                          className="absolute inset-0 bg-accent"
+                          transition={{
+                            type: "spring",
+                            stiffness: 420,
+                            damping: 34,
+                          }}
+                        />
+                      )}
+
+                      {/* NUMBER */}
+                      <span
+                        className={`
+              relative z-10 shrink-0 font-mono text-[8px]
+              tracking-[0.18em]
+              ${active ? "text-white/60" : "text-muted/60"}
+            `}
+                      >
+                        {String(index + 1).padStart(2, "0")}
+                      </span>
+
+                      {/* ICON */}
+                      <Icon
+                        className={`
+              relative z-10 size-4 shrink-0
+              ${active ? "text-white" : "text-muted group-hover:text-text"}
+            `}
                       />
-                    )}
 
-                    {!active && (
-                      <span className="absolute inset-0 bg-background opacity-0 transition-opacity group-hover:opacity-100" />
-                    )}
+                      {/* LABEL */}
+                      <span
+                        className="
+              relative z-10 min-w-0 truncate
+              font-display text-sm font-bold
+              italic uppercase tracking-wide
+            "
+                      >
+                        {component.id === "motherboard" ? "MB" : component.name}
+                      </span>
 
-                    <span className="relative z-10 w-6 font-mono text-[10px] opacity-60 [@media(max-height:700px)]:hidden">
-                      {String(index + 1).padStart(2, "0")}
-                    </span>
+                      {/* ACTIVE INDICATOR */}
+                      {active && (
+                        <motion.span
+                          initial={{ scaleX: 0 }}
+                          animate={{ scaleX: 1 }}
+                          className="
+                absolute bottom-0 left-0 right-0 z-10
+                h-[2px] origin-left bg-white/70
+              "
+                        />
+                      )}
+                    </motion.button>
+                  );
+                })}
 
-                    <Icon className="relative z-10 size-4 shrink-0 [@media(max-height:700px)]:size-3.5" />
-
-                    <span className="relative z-10 text-lg italic font-bold uppercase tracking-wide font-display [@media(max-height:800px)]:text-base [@media(max-height:700px)]:text-sm">
-                      {component.name}
-                    </span>
-
-                    {active && (
-                      <motion.span
-                        initial={{ width: 0 }}
-                        animate={{ width: 32 }}
-                        className="relative z-10 ml-auto h-px bg-white/60 [@media(max-height:700px)]:hidden"
-                      />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="shrink-0 px-5 pb-4 pt-6 [@media(max-height:800px)]:pb-3 [@media(max-height:800px)]:pt-3 [@media(max-height:700px)]:pb-2 [@media(max-height:700px)]:pt-2">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={activeGroup.id}
-                  initial={{ opacity: 0, x: -14 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 14 }}
-                  transition={{ duration: 0.16 }}
-                >
-                  <p className="font-mono text-[9px] uppercase tracking-[0.25em] text-accent-dark">
-                    Select / {activeGroup.name}
-                  </p>
-
-                  <h2 className="mt-2 text-3xl italic font-bold uppercase font-display [@media(max-height:800px)]:mt-1 [@media(max-height:800px)]:text-2xl [@media(max-height:700px)]:text-xl">
-                    {activeGroup.label}
-                  </h2>
-                </motion.div>
-              </AnimatePresence>
-
-              <div className="relative mt-4 [@media(max-height:800px)]:mt-2 [@media(max-height:700px)]:mt-1.5">
-                <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" />
-
-                <input
-                  type="search"
-                  value={searchQuery}
-                  onChange={(event) => setSearchQuery(event.target.value)}
-                  placeholder={`SEARCH ${activeGroup.name}`}
-                  className="h-11 w-full border border-border bg-background pl-10 pr-3 font-mono text-[10px] uppercase tracking-wider outline-none placeholder:text-muted focus:border-accent [@media(max-height:800px)]:h-9 [@media(max-height:700px)]:h-8"
-                />
+                {/* Empty final cell so CASE keeps the 2-column structure */}
+                {componentGroups.length % 2 !== 0 && (
+                  <div aria-hidden="true" className="min-h-[58px] bg-surface" />
+                )}
               </div>
             </div>
 
@@ -1311,7 +1316,10 @@ export function BuildPage() {
                 onClick={() => setMobilePanel(null)}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1, transition: { duration: 0.2 } }}
-                exit={{ opacity: 0, transition: { duration: 0.22, ease: "easeOut" } }}
+                exit={{
+                  opacity: 0,
+                  transition: { duration: 0.22, ease: "easeOut" },
+                }}
                 className="fixed inset-0 z-40 bg-black/55 backdrop-blur-[2px] lg:hidden"
               />
 
