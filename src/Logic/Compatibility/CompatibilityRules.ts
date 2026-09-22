@@ -3,7 +3,7 @@ import { ramKits } from "../../data/ram";
 import { cases } from "../../data/case";
 import { gpus } from "../../data/gpu";
 import type { CASE, CPU, Motherboard, RAM, GPU, STORAGE, PSU } from "../../data/type";
-import type { ComponentType, CompatibilityRule } from "../../data/type";
+import type { ComponentType, CompatibilityRule, RuleCheckResult } from "../../data/type";
 
 // motherboard-case form factor hierarchy
 
@@ -16,22 +16,63 @@ const formFactorSize = {
 export function compatibilityRules() {
     
 
-  const motherboardCpuCompatibility: (motherboard: Motherboard, cpu: CPU) => boolean = (
-    motherboard,
-    cpu
-  ) => {
-    const isCpuCompatible = motherboard.socket === cpu.socket;
-    return isCpuCompatible;
+const motherboardCpuCompatibility = (
+  motherboard: Motherboard,
+  cpu: CPU,
+): RuleCheckResult => {
+  const isCompatible = motherboard.socket === cpu.socket;
+
+  if (isCompatible) {
+    return {
+      isCompatible: true,
+    };
+  }
+  return {
+    isCompatible: false,
+    error: {
+      type: "error",
+      rule: "CPU_MOTHERBOARD_SOCKET",
+      title: "CPU and motherboard sockets do not match",
+      compatibilityIssue:
+        `${cpu.name} uses socket ${cpu.socket}, but ` +
+        `${motherboard.name} uses socket ${motherboard.socket}.`,
+
+      source: {
+        id: cpu.id,
+        name: cpu.name,
+        componentType: cpu.componentType,
+        value: cpu.socket,
+      },
+
+      target: {
+        id: motherboard.id,
+        name: motherboard.name,
+        componentType: motherboard.componentType,
+        value: motherboard.socket,
+      },
+
+      suggestedAction: "MOTHERBOARD",
+    },
   };
+};
+
+
+
   const ramMotherboardCompatibility: (ram: RAM, motherboard: Motherboard) => boolean = (
     ram,
     motherboard
   ) => {
     const isRamCompatible = ram.type === motherboard.ramType;
+   if (isRamCompatible === false) {
+      console.log("choose the same DDR generation for both motherbard/RAM")
+    }
     return isRamCompatible;
   };
   const gpuCaseCompatibility: (gpu: GPU, pcCase: CASE) => boolean = (gpu, pcCase) => {
     const isGpuCompatible = pcCase.maxGpuLength >= gpu.length;
+     if (isGpuCompatible === false) {
+      console.log("choose a case with enough GPU clearance")
+    }
     return isGpuCompatible;
   };
   const storageCompatibility: (storageDevices: STORAGE, motherboard: Motherboard) => boolean = (
@@ -65,6 +106,7 @@ export function compatibilityRules() {
     return isCompatible;
   };
 
+  // TODO: trying out new funcitonality in the belwo funciton
   const motherboardCaseCompatibility = (pcCase: CASE, motherboard: Motherboard): boolean => {
     return formFactorSize[pcCase.formFactor] >= formFactorSize[motherboard.formFactor];
   };

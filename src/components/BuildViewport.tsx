@@ -335,9 +335,14 @@ export function BuildViewport({
               style={{ width: `${buildProgress}%` }}
             />
           </div>
+            {/* // Persistant Compatibility Issues */}
+        <div className="w-full h-{20px} flex-1 flex-col text-text font-bold p-2">
+          <h3>
+            Compatibility Issues
+          </h3>
         </div>
-
-        {/* PART LIST */}
+        </div>
+               {/* PART LIST */}
 
         <div className="flex-1 min-h-0 overflow-y-auto">
           <BuildPartRow

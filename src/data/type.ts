@@ -128,13 +128,14 @@ export type CompatibilityResult = {
   selectedComponent: string;
   targetComponent: string;
   isCompatible: boolean;
+  error?: DetailedErrors;
 };
 
 type CompatibilityCheck = {
   bivarianceHack(
     selectedComponent: CompatibleComponent,
     targetComponent: CompatibleComponent
-  ): boolean;
+  ): boolean | RuleCheckResult;
 }["bivarianceHack"];
 
 export type CompatibilityRule = {
@@ -163,3 +164,37 @@ export type preBuild = {
     useCase: string[]
     build: BUILD
 }
+
+export type DetailedErrors = {
+  type: "error" | "warning";
+  rule: CompatiblityRule;
+  title: string;
+  compatibilityIssue: string;
+  source:ComponentRefernce;
+  target: ComponentRefernce;
+  suggestedAction: Category;
+}
+
+type ComponentRefernce = {
+  id: number;
+  name: string;
+  componentType: ComponentType;
+  value: string;
+}
+
+export type CompatiblityRule =
+  | "CPU_MOTHERBOARD_SOCKET"
+  | "RAM_MOTHERBOARD_TYPE"
+  | "PSU_WATTAGE"
+  | "GPU_CASE_CLEARANCE";
+
+
+
+export type RuleCheckResult =
+  | {
+      isCompatible: true;
+    }
+  | {
+      isCompatible: false;
+      error: DetailedErrors;
+    };

@@ -42,6 +42,7 @@ import type {
 
 import {
   buildToComponents,
+  getDetailedErrors,
   validateBuild,
 } from "@/Logic/Compatibility/Compatibility";
 import { savedBuildListSchema } from "@/zod/buildSchema";
@@ -573,12 +574,17 @@ export function BuildPage() {
   }
 
   function installIfCompatible(proposedBuild: BUILD) {
-    const results = validateBuild(buildToComponents(proposedBuild));
+    const selectedComponents = buildToComponents(proposedBuild);
+    const results = validateBuild(selectedComponents);
+    const detailedErrors = getDetailedErrors(selectedComponents);
+
+    console.log("[compatibility] detailed build errors", detailedErrors);
+
     const conflict = results.find((result) => !result.isCompatible);
 
     if (conflict) {
       toast(
-        `${conflict.selectedComponent} is incompatible with ${conflict.targetComponent}.`,
+        `${conflict.selectedComponent} is incompatible with ${conflict.targetComponent},`
       );
       return false;
     }
@@ -714,7 +720,6 @@ export function BuildPage() {
         return;
       }
     }
-
     setPreviewPart(part);
     installPart(part);
   }

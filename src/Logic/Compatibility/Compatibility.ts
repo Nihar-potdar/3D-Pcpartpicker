@@ -1,5 +1,11 @@
 import { compatibilityRules } from "./CompatibilityRules";
-import type { CompatibleComponent, CompatibilityResult, ComponentType, BUILD } from "../../data/type";
+import type {
+  CompatibleComponent,
+  CompatibilityResult,
+  ComponentType,
+  BUILD,
+  DetailedErrors,
+} from "../../data/type";
 
 // this is the remove duplicate component validation types. Controls which selected component starts a check.
 const BUILD_VALIDATION_SOURCES: ComponentType[] = ["CPU", "RAM", "GPU", "Storage", "PSU", "Case"];
@@ -49,11 +55,16 @@ export function compatibilityEngine(
     : rule.target;
 
   return targets.map((targetComponent) => {
-    const isCompatible = rule.check(selectedComponent, targetComponent);
+    const checkResult = rule.check(selectedComponent, targetComponent);
+    const result = typeof checkResult === "boolean"
+      ? { isCompatible: checkResult }
+      : checkResult;
+
     return {
       selectedComponent: selectedComponent.name,
       targetComponent: targetComponent.name,
-      isCompatible,
+      isCompatible: result.isCompatible,
+      error: "error" in result ? result.error : undefined,
     };
   });
 }
@@ -61,8 +72,22 @@ export function compatibilityEngine(
 // Checks the build with the components chosen by the user. should be used when the user has CHOSEN a component. this DEPENDS on the compatibiltyEngine() above.
 
 export function validateBuild(selectedComponent: CompatibleComponent[]): CompatibilityResult[] {
-  console.log(selectedComponent);
   return selectedComponent
     .filter((component) => BUILD_VALIDATION_SOURCES.includes(component.componentType))
     .flatMap((component) => compatibilityEngine(component, selectedComponent));
+}
+
+
+export function getDetailedErrors(
+  selectedComponents: CompatibleComponent[],
+): DetailedErrors[] {
+  return validateBuild(selectedComponents)
+    .filter(
+      (
+        result,
+      ): result is CompatibilityResult & { error: DetailedErrors } =>
+        !result.isCompatible &&
+        result.error !== undefined,
+    )
+    .map((result) => result.error);
 }
