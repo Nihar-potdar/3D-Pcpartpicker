@@ -7,8 +7,10 @@ import {
   useProgress,
 } from "@react-three/drei";
 import {
+  AlertTriangle,
   Box,
   Check,
+  ChevronDown,
   CircuitBoard,
   Cpu,
   Gpu,
@@ -20,11 +22,17 @@ import {
 } from "lucide-react";
 import { Canvas } from "@react-three/fiber";
 import { AnimatePresence, motion } from "motion/react";
-import type { BUILD, CompatibleComponent } from "@/data/type";
-import { Suspense } from "react";
+import type {
+  BUILD,
+  Category,
+  CompatibleComponent,
+  DetailedErrors,
+} from "@/data/type";
+import { Suspense, useState } from "react";
 import { PcAssembly } from "./PcAssembly";
 import { getPartHighlights } from "@/lib/getPartHighlights";
 import { specDescriptions } from "@/data/specDescriptions";
+import { useIssueStore } from "@/stores/ComptiblityIssuesStore";
 
 type BuildViewportProps = {
   selectedCategory: string;
@@ -32,6 +40,7 @@ type BuildViewportProps = {
   build: BUILD;
   onRemoveDrive: (targetid: string) => void;
   onRemovePart: (targetid: string) => void;
+  onSuggestedAction: (category: Category) => void;
 };
 
 type BuildPartRowProps = {
@@ -126,12 +135,169 @@ function ModelLoader() {
   );
 }
 
+// Compatiblity Issue Detailed Panel/Card
+
+type CompatiblityIssuesPanelProps = {
+  issues: DetailedErrors[];
+  onSuggestedAction: (category: Category) => void;
+};
+
+export function CompatibilityIssuesPanel({
+  issues,
+  onSuggestedAction,
+}: CompatiblityIssuesPanelProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const hasIssues = issues.length > 0;
+
+  return (
+    <aside
+      className={`border ${
+        hasIssues
+          ? "border-danger/50 bg-danger/10"
+          : "border-green-500/40 bg-green-500/10"
+      }`}
+    >
+      <button
+        type="button"
+        onClick={() => setIsOpen((open) => !open)}
+        aria-expanded={isOpen}
+        className="flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left"
+      >
+        <span className="flex min-w-0 items-center gap-2.5">
+          <span
+            className={`grid size-7 shrink-0 place-items-center border ${
+              hasIssues
+                ? "border-danger/50 bg-danger/15 text-danger"
+                : "border-green-500/50 bg-green-500/15 text-green-400"
+            }`}
+          >
+            {hasIssues ? (
+              <AlertTriangle className="size-4" />
+            ) : (
+              <Check className="size-4" />
+            )}
+          </span>
+
+          <span>
+            <span
+              className={`block font-mono text-[9px] font-bold uppercase tracking-wider ${
+                hasIssues ? "text-danger" : "text-green-400"
+              }`}
+            >
+              {hasIssues ? "Compatibility issues" : "Build compatible"}
+            </span>
+            <span className="block text-[10px] text-muted">
+              {issues.length} {issues.length === 1 ? "issue" : "issues"}
+            </span>
+          </span>
+        </span>
+
+        <ChevronDown
+          className={`size-4 shrink-0 text-muted transition-transform ${
+            isOpen ? "rotate-180" : ""
+          }`}
+        />
+      </button>
+
+      <AnimatePresence initial={false}>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="space-y-2 border-t border-border/70 p-3">
+              {hasIssues ? (
+                issues.map((issue) => (
+                  <CompatibilityIssueCard
+                    key={`${issue.rule}-${issue.source.id}-${issue.target.id}`}
+                    issue={issue}
+                    onSuggestedAction={onSuggestedAction}
+                  />
+                ))
+              ) : (
+                <p className="text-xs leading-5 text-green-300">
+                  No compatibility problems found in the current build.
+                </p>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </aside>
+  );
+}
+
+type CompatibilityIssueCardProps = {
+  issue: DetailedErrors;
+  onSuggestedAction: (category: Category) => void;
+};
+
+export function CompatibilityIssueCard({
+  issue,
+  onSuggestedAction,
+}: CompatibilityIssueCardProps) {
+  return (
+    <article className="border border-danger/25 bg-background/75 p-3">
+      <p className="text-xs leading-5 text-text">{issue.compatibilityIssue}</p>
+      <button
+        type="button"
+        onClick={() => onSuggestedAction(issue.suggestedAction)}
+        className="mt-2 flex w-full items-center justify-between border border-danger/30 bg-danger/10 px-2.5 py-2 text-left font-mono text-[9px] uppercase tracking-wider text-muted transition hover:border-danger/70 hover:bg-danger/20"
+      >
+        <span>Suggested action</span>
+        <span className="font-bold text-danger">
+          Replace {issue.suggestedAction} →
+        </span>
+      </button>
+
+      <details className="group mt-3 border-t border-border/70 pt-2">
+        <summary className="cursor-pointer list-none font-mono text-[9px] uppercase tracking-wider text-accent-dark marker:content-none">
+          <span className="flex items-center justify-between">
+            Detailed overview
+            <ChevronDown className="size-3.5 transition-transform group-open:rotate-180" />
+          </span>
+        </summary>
+
+        <div className="mt-3 space-y-3">
+          <div>
+            <p className="text-sm font-semibold text-text">{issue.title}</p>
+            <p className="mt-1 font-mono text-[8px] uppercase tracking-wider text-muted">
+              Rule / {issue.rule}
+            </p>
+          </div>
+
+          <dl className="grid grid-cols-2 gap-2 text-xs">
+            <div className="border border-border bg-surface/60 p-2">
+              <dt className="font-mono text-[8px] uppercase tracking-wider text-muted">
+                Selected
+              </dt>
+              <dd className="mt-1 font-medium text-text">{issue.source.name}</dd>
+              <dd className="mt-1 text-danger">{issue.source.value}</dd>
+            </div>
+
+            <div className="border border-border bg-surface/60 p-2">
+              <dt className="font-mono text-[8px] uppercase tracking-wider text-muted">
+                Required / supported
+              </dt>
+              <dd className="mt-1 font-medium text-text">{issue.target.name}</dd>
+              <dd className="mt-1 text-accent-dark">{issue.target.value}</dd>
+            </div>
+          </dl>
+        </div>
+      </details>
+    </article>
+  );
+}
+
 export function BuildViewport({
   selectedCategory,
   selectedPart,
   build,
   onRemoveDrive,
   onRemovePart,
+  onSuggestedAction,
 }: BuildViewportProps) {
   const completedParts = [
     build.CPU,
@@ -162,6 +328,10 @@ export function BuildViewport({
   const selectedPartHighlights = selectedPart
     ? getPartHighlights(selectedPart)
     : [];
+
+  const compatibilityIssues = useIssueStore(
+    (state) => state.CompatiblityIssues,
+  );
 
   return (
     <section className="relative h-full w-full  min-h-0 overflow-hidden border viewport-vignette build-scene border-border bg-surface">
@@ -322,27 +492,29 @@ export function BuildViewport({
               </p>
               <h2 className="mt-1 text-xl italic font-bold uppercase font-display text-text">
                 Your machine
-              </h2>
+              </h2>{" "}
+              <div className="space-y-4"></div>
+              <div className="flex items-center gap-1.5 border border-accent/30 bg-accent-soft px-2 py-1 font-mono text-[10px] font-bold text-accent-dark">
+                <Check className="size-3" />
+                {completedParts}/{totalPartCategories}
+              </div>
             </div>
-            <div className="flex items-center gap-1.5 border border-accent/30 bg-accent-soft px-2 py-1 font-mono text-[10px] font-bold text-accent-dark">
-              <Check className="size-3" />
-              {completedParts}/{totalPartCategories}
+            <div className="mt-4 h-1.5 overflow-hidden bg-background">
+              <div
+                className="h-full transition-all duration-300 bg-accent"
+                style={{ width: `${buildProgress}%` }}
+              />
             </div>
           </div>
-          <div className="mt-4 h-1.5 overflow-hidden bg-background">
-            <div
-              className="h-full transition-all duration-300 bg-accent"
-              style={{ width: `${buildProgress}%` }}
+
+          <div className="mt-3">
+            <CompatibilityIssuesPanel
+              issues={compatibilityIssues}
+              onSuggestedAction={onSuggestedAction}
             />
           </div>
-            {/* // Persistant Compatibility Issues */}
-        <div className="w-full h-{20px} flex-1 flex-col text-text font-bold p-2">
-          <h3>
-            Compatibility Issues
-          </h3>
         </div>
-        </div>
-               {/* PART LIST */}
+        {/* PART LIST */}
 
         <div className="flex-1 min-h-0 overflow-y-auto">
           <BuildPartRow

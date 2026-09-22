@@ -1,16 +1,4 @@
-import {
-  Box,
-  Check,
-  CircuitBoard,
-  Cpu,
-  Gpu,
-  HardDrive,
-  MemoryStick,
-  PlugZap,
-  Search,
-  X,
-  type LucideIcon,
-} from "lucide-react";
+import { X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
@@ -24,458 +12,40 @@ import { toast } from "sonner";
 import { BuildViewport } from "@/components/BuildViewport";
 import { NavBar } from "@/components/NavBar";
 
-import { cases } from "@/data/case";
-import { cpus } from "@/data/cpu";
-import { gpus } from "@/data/gpu";
-import { motherboards } from "@/data/motherboard";
-import { psus } from "@/data/psu";
-import { ramKits } from "@/data/ram";
-import { storageDevices } from "@/data/storage";
-
-import type {
-  BUILD,
-  Category,
-  CompatibleComponent,
-  InstalledDrive,
-  SavedBuild,
+import {
+  type BUILD,
+  type Category,
+  type CompatibleComponent,
+  type DetailedErrors,
+  type InstalledDrive,
+  type SavedBuild,
 } from "@/data/type";
 
 import {
   buildToComponents,
   getDetailedErrors,
-  validateBuild,
 } from "@/Logic/Compatibility/Compatibility";
 import { savedBuildListSchema } from "@/zod/buildSchema";
 import { useBuildStore } from "@/stores/BuildStore";
 import { getPartHighlights } from "@/lib/getPartHighlights";
+import { useIssueStore } from "@/stores/ComptiblityIssuesStore";
+import {
+  componentKey,
+  getCandidateCompatibilityIssues,
+} from "@/Logic/Compatibility/CandidateCompatibility";
+import { CompatibilityWarningDialog } from "./build/CompatibilityWarningDialog";
+import { DesktopPartsSidebar } from "./build/DesktopPartsSidebar";
+import { MobileBuildPanel } from "./build/MobileBuildPanel";
+import { MobilePartsPanel } from "./build/MobilePartsPanel";
+import { PullDownToClose } from "./build/PullDownToClose";
+import { categoryNames, componentGroups } from "./build/buildCatalog";
+import type { CompatibilityFilterMode } from "./build/CompatibilityFilterToggle";
 
-type ComponentGroup = {
-  id: string;
-  name: string;
-  label: string;
-  icon: LucideIcon;
-  items: CompatibleComponent[];
-};
-
-const componentGroups: ComponentGroup[] = [
-  { id: "cpu", name: "CPU", label: "Processor", icon: Cpu, items: cpus },
-  { id: "gpu", name: "GPU", label: "Graphics", icon: Gpu, items: gpus },
-  {
-    id: "motherboard",
-    name: "MOTHERBOARD",
-    label: "Motherboard",
-    icon: CircuitBoard,
-    items: motherboards,
-  },
-  {
-    id: "ram",
-    name: "MEMORY",
-    label: "Memory",
-    icon: MemoryStick,
-    items: ramKits,
-  },
-  {
-    id: "storage",
-    name: "STORAGE",
-    label: "Storage",
-    icon: HardDrive,
-    items: storageDevices,
-  },
-  {
-    id: "psu",
-    name: "POWER",
-    label: "Power supply",
-    icon: PlugZap,
-    items: psus,
-  },
-  { id: "case", name: "CASE", label: "Case", icon: Box, items: cases },
-];
-
-const categoryNames: Record<string, string> = {
-  cpu: "Processor bay",
-  gpu: "Graphics bay",
-  motherboard: "Mainboard tray",
-  ram: "Memory bank",
-  storage: "Storage array",
-  psu: "Power chamber",
-  case: "Chassis frame",
-};
-
-type MobilePartsPanelProps = {
-  activeGroup: ComponentGroup;
-  filteredParts: CompatibleComponent[];
-  searchQuery: string;
-  setSearchQuery: (value: string) => void;
-  selectedPartKey?: string;
-  installedDrives: InstalledDrive[];
-  chooseProduct: (part: CompatibleComponent) => void;
-  addStorage: (part: CompatibleComponent) => void;
-};
-
-function PullDownToClose({
-  children,
-  onClose,
-}: {
-  children: React.ReactNode;
-  onClose: () => void;
-}) {
-  const startY = useRef(0);
-  const pulling = useRef(false);
-
-  function handleTouchStart(event: React.TouchEvent<HTMLDivElement>) {
-    const element = event.currentTarget;
-
-    if (element.scrollTop <= 0) {
-      startY.current = event.touches[0].clientY;
-      pulling.current = true;
-    } else {
-      pulling.current = false;
-    }
-  }
-
-  function handleTouchMove(event: React.TouchEvent<HTMLDivElement>) {
-    if (!pulling.current) return;
-
-    const element = event.currentTarget;
-
-    //User started scrolling the list normally
-    if (element.scrollTop > 0) {
-      pulling.current = false;
-      return;
-    }
-
-    const currentY = event.touches[0].clientY;
-    const distance = currentY - startY.current;
-
-    // Only dismiss on a deliberate downward pull.
-    if (distance <= 0) return;
-
-    if (distance > 45) {
-      pulling.current = false;
-      onClose();
-    }
-  }
-
-  function handleTouchEnd() {
-    pulling.current = false;
-  }
-
-  return (
-    <div
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-      className="min-h-0 flex-1 overflow-y-auto overscroll-contain"
-    >
-      {children}
-    </div>
-  );
-}
-
-function MobilePartsPanel({
-  activeGroup,
-  filteredParts,
-  searchQuery,
-  setSearchQuery,
-  selectedPartKey,
-  installedDrives,
-  chooseProduct,
-  addStorage,
-}: MobilePartsPanelProps) {
-  return (
-    <>
-      <div className="relative px-4 py-3 shrink-0">
-        <Search className="absolute -translate-y-1/2 left-7 top-1/2 size-4 text-muted" />
-        <input
-          value={searchQuery}
-          onChange={(event) => setSearchQuery(event.target.value)}
-          placeholder={`SEARCH ${activeGroup.name}`}
-          className="h-11 w-full border border-border bg-surface pl-10 pr-3 font-mono text-[10px] uppercase tracking-wide outline-none placeholder:text-muted focus:border-accent"
-        />
-      </div>
-
-      <div className="px-3 pb-5">
-        <AnimatePresence mode="popLayout">
-          {filteredParts.map((part, index) => {
-            const key = `${part.componentType}-${part.id}`;
-            const selected =
-              part.componentType === "Storage"
-                ? installedDrives.some((drive) => drive.product.id === part.id)
-                : selectedPartKey === key;
-            const specs = getPartHighlights(part)
-              .slice(0, 4)
-              .map((item) => item.value);
-
-            return (
-              <motion.div
-                key={key}
-                layout
-                initial={{ opacity: 0, x: -8 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 8 }}
-                transition={{ duration: 0.16 }}
-              >
-                <motion.button
-                  type="button"
-                  aria-pressed={selected}
-                  aria-label={`${selected ? "Remove" : "Select"} ${part.name}`}
-                  onClick={() => chooseProduct(part)}
-                  whileTap={{ scale: 0.985 }}
-                  transition={{ duration: 0.12 }}
-                  className={`w-full border-l-2 px-4 py-4 text-left ${
-                    selected
-                      ? "accent-glow border-accent bg-surface"
-                      : "border-transparent border-b border-b-border hover:bg-surface"
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="min-w-0">
-                      <p className="font-mono text-[8px] uppercase tracking-[0.2em] text-muted">
-                        PART_{String(index + 1).padStart(2, "0")}
-                      </p>
-                      <p className="mt-1 text-base italic font-bold leading-5 uppercase font-display">
-                        {part.name}
-                      </p>
-                      <p className="mt-2 font-mono text-[9px] uppercase leading-5 text-muted">
-                        {specs.join(" / ")}
-                      </p>
-                    </div>
-
-                    <div className="flex flex-col items-end gap-2 shrink-0">
-                      <span className="font-mono text-sm font-bold">
-                        ${part.price.toFixed(2)}
-                      </span>
-
-                      {part.componentType === "Storage" && (
-                        <span className="font-mono text-[9px] uppercase text-accent-dark">
-                          {
-                            installedDrives.filter(
-                              (drive) => drive.product.id === part.id,
-                            ).length
-                          }{" "}
-                          installed · {selected ? "Remove one" : "Add drive"}
-                        </span>
-                      )}
-
-                      <AnimatePresence>
-                        {selected && (
-                          <motion.span
-                            initial={{ opacity: 0, scale: 0.4, rotate: -30 }}
-                            animate={{ opacity: 1, scale: 1, rotate: 0 }}
-                            exit={{ opacity: 0, scale: 0.5, rotate: 20 }}
-                            transition={{ duration: 0.15 }}
-                            className="grid text-white size-6 place-items-center bg-accent"
-                          >
-                            <Check className="size-3.5" />
-                          </motion.span>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  </div>
-                </motion.button>
-                {part.componentType === "Storage" && selected && (
-                  <button
-                    type="button"
-                    onClick={() => addStorage(part)}
-                    aria-label={`Add another ${part.name}`}
-                    className="w-full min-h-11 border-b border-border px-4 py-2 text-left font-mono text-[10px] uppercase text-accent-dark hover:bg-accent-soft"
-                  >
-                    + Add another
-                  </button>
-                )}
-              </motion.div>
-            );
-          })}
-        </AnimatePresence>
-
-        {filteredParts.length === 0 && (
-          <div className="px-4 py-16 text-center">
-            <p className="text-lg italic font-bold uppercase font-display">
-              No parts found
-            </p>
-            <p className="mt-1 font-mono text-[9px] uppercase tracking-wider text-muted">
-              Adjust your search
-            </p>
-          </div>
-        )}
-      </div>
-    </>
-  );
-}
-
-type MobileBuildPanelProps = {
+type PendingInstallation = {
   build: BUILD;
-  totalPrice: number;
-  buildName: string;
-  setBuildName: (value: string) => void;
-  saveBuild: () => void;
-  savedBuilds: SavedBuild[];
-  loadBuild: (build: SavedBuild) => void;
-  deleteSavedBuild: (id: string) => void;
-  removePart: (category: Category) => void;
-  removeDrive: (id: string) => void;
-  resetBuild: () => void;
+  issues: DetailedErrors[];
+  onInstalled?: () => void;
 };
-
-function MobileBuildPanel({
-  build,
-  totalPrice,
-  buildName,
-  setBuildName,
-  resetBuild,
-  saveBuild,
-  savedBuilds,
-  loadBuild,
-  deleteSavedBuild,
-  removePart,
-  removeDrive,
-}: MobileBuildPanelProps) {
-  const rows: Array<{
-    category: Category;
-    label: string;
-    part: CompatibleComponent | undefined;
-  }> = [
-    { category: "CPU", label: "Processor", part: build.CPU },
-    { category: "GPU", label: "Graphics", part: build.GPU },
-    { category: "MOTHERBOARD", label: "Motherboard", part: build.MOTHERBOARD },
-    { category: "RAM", label: "Memory", part: build.RAM },
-    { category: "PSU", label: "Power", part: build.PSU },
-    { category: "CASE", label: "Case", part: build.CASE },
-  ];
-
-  return (
-    <>
-      <div className="p-4 border-b border-border">
-        <div className="flex gap-2">
-          <input
-            value={buildName}
-            onChange={(event) => setBuildName(event.target.value)}
-            placeholder="BUILD NAME"
-            className="h-10 min-w-0 flex-1 border border-border bg-surface px-3 font-mono text-[10px] uppercase outline-none focus:border-accent"
-          />
-
-          <motion.button
-            whileTap={{ scale: 0.94 }}
-            onClick={saveBuild}
-            className="px-5 text-xs italic font-bold text-white uppercase cut-corner bg-accent font-display"
-          >
-            Save
-          </motion.button>
-          <motion.button
-            whileTap={{ scale: 0.94 }}
-            onClick={resetBuild}
-            className="px-5 text-xs italic font-bold text-white uppercase cut-corner bg-accent font-display"
-          >
-            Reset
-          </motion.button>
-        </div>
-
-        {savedBuilds.length > 0 && (
-          <div className="flex gap-2 mt-3 overflow-x-auto">
-            {savedBuilds.map((save) => (
-              <div
-                key={save.id}
-                className="flex items-center gap-2 px-3 py-2 border shrink-0 border-border bg-surface"
-              >
-                <span className="text-xs italic font-bold uppercase font-display">
-                  {save.name}
-                </span>
-                <button
-                  onClick={() => loadBuild(save)}
-                  className="font-mono text-[9px] uppercase text-accent-dark"
-                >
-                  Load
-                </button>
-                <button
-                  onClick={() => deleteSavedBuild(save.id)}
-                  className="font-mono text-xs text-muted hover:text-danger"
-                >
-                  ×
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <div>
-        {rows.map(({ category, label, part }) => (
-          <div
-            key={category}
-            className="flex items-center justify-between gap-3 px-4 py-4 border-b border-border"
-          >
-            <div className="min-w-0">
-              <p className="font-mono text-[8px] uppercase tracking-widest text-muted">
-                {label}
-              </p>
-              <p className="mt-1 text-sm italic font-bold uppercase truncate font-display">
-                {part?.name ?? "Not installed"}
-              </p>
-            </div>
-
-            {part && (
-              <button
-                onClick={() => removePart(category)}
-                className="font-mono text-[9px] uppercase text-danger"
-              >
-                Remove
-              </button>
-            )}
-          </div>
-        ))}
-
-        {build.STORAGE.length === 0 && (
-          <div className="px-4 py-4 border-b border-border">
-            <p className="font-mono text-[8px] uppercase tracking-widest text-muted">
-              Storage
-            </p>
-            <p className="mt-1 text-sm italic font-bold uppercase font-display text-muted">
-              Not installed
-            </p>
-          </div>
-        )}
-
-        {build.STORAGE.map((drive) => (
-          <div
-            key={drive.instanceId}
-            className="flex items-center justify-between gap-3 px-4 py-4 border-b border-border"
-          >
-            <div className="min-w-0">
-              <p className="font-mono text-[8px] uppercase tracking-widest text-muted">
-                Storage
-              </p>
-              <p className="mt-1 text-sm italic font-bold uppercase truncate font-display">
-                {drive.product.name}
-              </p>
-            </div>
-
-            <button
-              onClick={() => removeDrive(drive.instanceId)}
-              className="font-mono text-[9px] uppercase text-danger"
-            >
-              Remove
-            </button>
-          </div>
-        ))}
-      </div>
-
-      <div className="flex items-end justify-between px-4 py-4 border-t shrink-0 border-accent/30 bg-surface">
-        <div>
-          <p className="font-mono text-[8px] uppercase tracking-[0.22em] text-accent-dark">
-            Build value
-          </p>
-          <p className="mt-1 font-mono text-[9px] uppercase text-muted">
-            Current configuration
-          </p>
-        </div>
-
-        <span className="text-2xl italic font-bold font-display">
-          ${totalPrice.toFixed(2)}
-        </span>
-      </div>
-    </>
-  );
-}
 
 export function BuildPage() {
   const [searchParams] = useSearchParams();
@@ -488,12 +58,19 @@ export function BuildPage() {
   );
   const [searchQuery, setSearchQuery] = useState("");
   const [buildName, setBuildName] = useState("");
+  const [pendingInstallation, setPendingInstallation] =
+    useState<PendingInstallation | null>(null);
   const [mobilePanel, setMobilePanel] = useState<"parts" | "build" | null>(
     searchParams.get("panel") === "build" ? "build" : null,
   );
 
+  const setCompatibleIssues = useIssueStore(
+    (state) => state.setCompatiblityIssues,
+  );
   const build = useBuildStore((state) => state.build);
   const setBuild = useBuildStore((state) => state.setBuild);
+  const [compatibilityFilter, setCompatibilityFilter] =
+    useState<CompatibilityFilterMode>("all");
 
   const [savedBuilds, setSavedBuilds] = useState<SavedBuild[]>(() => {
     try {
@@ -526,27 +103,36 @@ export function BuildPage() {
   const selectedPartKey = installedPart
     ? `${installedPart.componentType}-${installedPart.id}`
     : undefined;
+  const candidateIssues = useMemo(() => {
+    return new Map(
+      activeGroup.items.map((candidate) => {
+        const issues = getCandidateCompatibilityIssues(build, candidate);
+
+        return [componentKey(candidate), issues];
+      }),
+    );
+  }, [activeGroup.items, build]);
 
   const filteredParts = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
-    if (!query) return activeGroup.items;
 
     return activeGroup.items.filter((part) => {
-      const highlights = getPartHighlights(part);
+      const matchSearches =
+        query.length === 0 ||
+        part.name.toLowerCase().includes(query) ||
+        part.brand.toLowerCase().includes(query);
 
-      return [
-        part.name,
-        part.brand,
-        ...highlights.flatMap((highlight) => [
-          highlight.label,
-          highlight.value,
-        ]),
-      ]
-        .join(" ")
-        .toLowerCase()
-        .includes(query);
+      if (!matchSearches) {
+        return false;
+      }
+      if (compatibilityFilter === "all") {
+        return true;
+      }
+      const issues = candidateIssues.get(componentKey(part)) ?? [];
+
+      return issues.length === 0;
     });
-  }, [activeGroup, searchQuery]);
+  }, [activeGroup.items, searchQuery, compatibilityFilter, candidateIssues]);
 
   const completedParts = [
     build.CPU,
@@ -573,24 +159,42 @@ export function BuildPage() {
     setSearchQuery("");
   }
 
-  function installIfCompatible(proposedBuild: BUILD) {
+  function installIfCompatible(proposedBuild: BUILD, onInstalled?: () => void) {
     const selectedComponents = buildToComponents(proposedBuild);
-    const results = validateBuild(selectedComponents);
     const detailedErrors = getDetailedErrors(selectedComponents);
 
     console.log("[compatibility] detailed build errors", detailedErrors);
 
-    const conflict = results.find((result) => !result.isCompatible);
+    if (detailedErrors.length > 0) {
+      setPendingInstallation({
+        build: proposedBuild,
+        issues: detailedErrors,
+        onInstalled,
+      });
 
-    if (conflict) {
-      toast(
-        `${conflict.selectedComponent} is incompatible with ${conflict.targetComponent},`
-      );
       return false;
     }
 
+    setCompatibleIssues([]);
     setBuild(proposedBuild);
+    onInstalled?.();
     return true;
+  }
+
+  function confirmIncompatibleInstallation() {
+    if (!pendingInstallation) return;
+
+    setBuild(pendingInstallation.build);
+    setCompatibleIssues(pendingInstallation.issues);
+    pendingInstallation.onInstalled?.();
+
+    toast.warning("Installed with compatibility issues", {
+      description: `${pendingInstallation.issues.length} ${
+        pendingInstallation.issues.length === 1 ? "issue is" : "issues are"
+      } shown in the compatibility panel.`,
+    });
+
+    setPendingInstallation(null);
   }
 
   function installPart(part: CompatibleComponent) {
@@ -730,24 +334,31 @@ export function BuildPage() {
       return false;
     }
 
-    setBuild((previous) => ({
-      ...previous,
+    const updatedBuild: BUILD = {
+      ...build,
       [category]: undefined,
-    }));
+    };
+
+    setBuild(updatedBuild);
+    setCompatibleIssues(getDetailedErrors(buildToComponents(updatedBuild)));
     return true;
   }
 
   function removeDrive(id: string) {
-    setBuild((previous) => ({
-      ...previous,
-      STORAGE: previous.STORAGE.filter((drive) => drive.instanceId !== id),
-    }));
+    const updatedBuild: BUILD = {
+      ...build,
+      STORAGE: build.STORAGE.filter((drive) => drive.instanceId !== id),
+    };
+
+    setBuild(updatedBuild);
+    setCompatibleIssues(getDetailedErrors(buildToComponents(updatedBuild)));
   }
 
   function resetBuild() {
-    setBuild(() => ({
+    setBuild({
       STORAGE: [],
-    }));
+    });
+    setCompatibleIssues([]);
   }
 
   function saveBuild() {
@@ -772,10 +383,10 @@ export function BuildPage() {
   }
 
   function loadBuild(savedBuild: SavedBuild) {
-    if (installIfCompatible(savedBuild.build)) {
+    installIfCompatible(savedBuild.build, () => {
       setPreviewPart(null);
       toast(`Loaded ${savedBuild.name}`);
-    }
+    });
   }
 
   function deleteSavedBuild(id: string) {
@@ -797,6 +408,12 @@ export function BuildPage() {
               setMobilePanel("build");
             }
           }}
+        />
+
+        <CompatibilityWarningDialog
+          issues={pendingInstallation?.issues ?? null}
+          onCancel={() => setPendingInstallation(null)}
+          onConfirm={confirmIncompatibleInstallation}
         />
 
         {/* ========================= */}
@@ -880,200 +497,18 @@ export function BuildPage() {
           {/* DESKTOP PARTS SIDEBAR */}
           {/* ========================= */}
 
-          <aside className="hidden min-h-0 w-[350px] shrink-0 flex-col overflow-hidden border-r border-border bg-surface lg:flex">
-            {/* DESKTOP CATEGORY GRID */}
-            <div className="shrink-0 border-b border-border bg-border">
-              <div className="grid grid-cols-2 gap-px">
-                {componentGroups.map((component, index) => {
-                  const Icon = component.icon;
-                  const active = component.id === catalogCategory;
-
-                  return (
-                    <motion.button
-                      key={component.id}
-                      type="button"
-                      onClick={() => openCategory(component.id)}
-                      whileTap={{ scale: 0.98 }}
-                      className={`
-            group relative flex min-h-[58px] items-center gap-3
-            overflow-hidden px-4 py-3 text-left
-            transition-colors
-
-            ${
-              active
-                ? "text-white"
-                : "bg-surface text-muted hover:bg-background hover:text-text"
-            }
-          `}
-                    >
-                      {/* ACTIVE BACKGROUND */}
-                      {active && (
-                        <motion.span
-                          layoutId="active-category"
-                          className="absolute inset-0 bg-accent"
-                          transition={{
-                            type: "spring",
-                            stiffness: 420,
-                            damping: 34,
-                          }}
-                        />
-                      )}
-
-                      {/* NUMBER */}
-                      <span
-                        className={`
-              relative z-10 shrink-0 font-mono text-[8px]
-              tracking-[0.18em]
-              ${active ? "text-white/60" : "text-muted/60"}
-            `}
-                      >
-                        {String(index + 1).padStart(2, "0")}
-                      </span>
-
-                      {/* ICON */}
-                      <Icon
-                        className={`
-              relative z-10 size-4 shrink-0
-              ${active ? "text-white" : "text-muted group-hover:text-text"}
-            `}
-                      />
-
-                      {/* LABEL */}
-                      <span
-                        className="
-              relative z-10 min-w-0 truncate
-              font-display text-sm font-bold
-              italic uppercase tracking-wide
-            "
-                      >
-                        {component.id === "motherboard" ? "MB" : component.name}
-                      </span>
-
-                      {/* ACTIVE INDICATOR */}
-                      {active && (
-                        <motion.span
-                          initial={{ scaleX: 0 }}
-                          animate={{ scaleX: 1 }}
-                          className="
-                absolute bottom-0 left-0 right-0 z-10
-                h-[2px] origin-left bg-white/70
-              "
-                        />
-                      )}
-                    </motion.button>
-                  );
-                })}
-
-                {/* Empty final cell so CASE keeps the 2-column structure */}
-                {componentGroups.length % 2 !== 0 && (
-                  <div aria-hidden="true" className="min-h-[58px] bg-surface" />
-                )}
-              </div>
-            </div>
-
-            {/* DESKTOP PART LIST */}
-            <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-4">
-              <AnimatePresence mode="popLayout">
-                {filteredParts.map((part, index) => {
-                  const key = `${part.componentType}-${part.id}`;
-
-                  const selected =
-                    part.componentType === "Storage"
-                      ? build.STORAGE.some(
-                          (drive) => drive.product.id === part.id,
-                        )
-                      : selectedPartKey === key;
-
-                  const specs = getPartHighlights(part)
-                    .slice(0, 4)
-                    .map((item) => item.value);
-
-                  return (
-                    <motion.div
-                      key={key}
-                      layout
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{
-                        opacity: 1,
-                        x: selected ? 5 : 0,
-                      }}
-                      exit={{ opacity: 0, x: 10 }}
-                      transition={{ duration: 0.16 }}
-                    >
-                      <motion.button
-                        type="button"
-                        aria-pressed={selected}
-                        aria-label={`${selected ? "Remove" : "Select"} ${part.name}`}
-                        onClick={() => chooseProduct(part)}
-                        whileHover={{ x: 4 }}
-                        whileTap={{ scale: 0.985 }}
-                        transition={{ duration: 0.12 }}
-                        className={`relative w-full border-l-2 px-4 py-4 text-left [@media(max-height:800px)]:py-3 [@media(max-height:700px)]:py-2 ${
-                          selected
-                            ? "accent-glow border-accent bg-background"
-                            : "border-transparent hover:border-accent/40 hover:bg-background/70"
-                        }`}
-                      >
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="min-w-0">
-                            <p className="font-mono text-[8px] uppercase tracking-[0.2em] text-muted">
-                              PART_{String(index + 1).padStart(2, "0")}
-                            </p>
-
-                            <p className="mt-1 text-base italic font-bold uppercase leading-5 font-display [@media(max-height:700px)]:text-sm">
-                              {part.name}
-                            </p>
-
-                            <p className="mt-1 text-xs text-muted">
-                              {part.brand}
-                            </p>
-                          </div>
-
-                          {selected && (
-                            <span className="grid size-6 shrink-0 place-items-center bg-accent text-white">
-                              <Check className="size-3.5" />
-                            </span>
-                          )}
-                        </div>
-
-                        <p className="mt-3 font-mono text-[9px] uppercase leading-5 text-muted [@media(max-height:800px)]:mt-2 [@media(max-height:700px)]:hidden">
-                          {specs.join(" / ")}
-                        </p>
-
-                        <div className="mt-3 flex items-end justify-between [@media(max-height:800px)]:mt-2">
-                          <span className="font-mono text-[9px] uppercase tracking-widest text-muted">
-                            {part.componentType === "Storage"
-                              ? `${
-                                  build.STORAGE.filter(
-                                    (drive) => drive.product.id === part.id,
-                                  ).length
-                                } installed`
-                              : selected
-                                ? "Remove"
-                                : "Select"}
-                          </span>
-
-                          <span className="font-mono text-sm font-bold">
-                            ${part.price.toFixed(2)}
-                          </span>
-                        </div>
-                      </motion.button>
-
-                      {part.componentType === "Storage" && selected && (
-                        <button
-                          type="button"
-                          onClick={() => installPart(part)}
-                          className="min-h-11 w-full border-b border-border px-4 py-2 text-left font-mono text-[10px] uppercase text-accent-dark hover:bg-accent-soft"
-                        >
-                          + Add another
-                        </button>
-                      )}
-                    </motion.div>
-                  );
-                })}
-              </AnimatePresence>
-            </div>
-          </aside>
+          <DesktopPartsSidebar
+            catalogCategory={catalogCategory}
+            filteredParts={filteredParts}
+            selectedPartKey={selectedPartKey}
+            build={build}
+            onOpenCategory={openCategory}
+            onChooseProduct={chooseProduct}
+            onAddStorage={installPart}
+            candidateIssues={candidateIssues}
+            compatibilityFilter={compatibilityFilter}
+            onCompatibilityFilterChange={setCompatibilityFilter}
+          />
 
           {/* ========================= */}
           {/* VIEWPORT + RESPONSIVE UI */}
@@ -1146,6 +581,10 @@ export function BuildPage() {
                 build={build}
                 onRemoveDrive={removeDrive}
                 onRemovePart={(id) => removePart(id as Category)}
+                onSuggestedAction={(category) => {
+                  openCategory(category.toLowerCase());
+                  setMobilePanel("parts");
+                }}
               />
 
               {/* MOBILE BUILD STATUS */}
@@ -1402,6 +841,9 @@ export function BuildPage() {
                       installedDrives={build.STORAGE}
                       addStorage={installPart}
                       chooseProduct={chooseProduct}
+                      candidateIssues={candidateIssues}
+                      compatibilityFilter={compatibilityFilter}
+                      onCompatibilityFilterChange={setCompatibilityFilter}
                     />
                   </PullDownToClose>
                 ) : (

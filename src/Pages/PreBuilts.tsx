@@ -11,6 +11,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { prebuilts } from "@/data/PreBuilds";
 import type { preBuild } from "@/data/type";
 import { useBuildStore } from "@/stores/BuildStore";
+import { useIssueStore } from "@/stores/ComptiblityIssuesStore";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { buildToComponents, validateBuild } from "@/Logic/Compatibility/Compatibility";
 import { toast } from "sonner";
@@ -220,6 +221,9 @@ function PrebuiltCard({
 export function Prebuilts() {
   const navigate = useNavigate();
   const setBuild = useBuildStore((state) => state.setBuild);
+  const clearCompatibilityIssues = useIssueStore(
+    (state) => state.clearCompatiblityIssues,
+  );
 
   
   function choosePrebuilt(prebuilt: preBuild) {
@@ -237,6 +241,7 @@ export function Prebuilts() {
             
             return;
         }
+    clearCompatibilityIssues();
     setBuild(prebuilt.build);
     toast.success(`${prebuilt.name} loaded`)
     navigate("/build");
