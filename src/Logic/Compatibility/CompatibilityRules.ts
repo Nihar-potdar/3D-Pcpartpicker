@@ -11,6 +11,7 @@ import type {
   STORAGE,
   PSU,
   RuleCheckResult,
+  PsuCompatibility,
 } from "../../data/type";
 import type { ComponentType, CompatibilityRule } from "../../data/type";
 
@@ -21,6 +22,11 @@ const formFactorSize = {
   "Micro ATX": 2,
   ATX: 3,
 };
+
+function ceilToMultiple(value:number, step: number): number {
+  if (step <= 0) return value;
+  return Math.ceil(value / step) * step;
+}
 
 export function compatibilityRules() {
   const motherboardCpuCompatibility = (
@@ -161,16 +167,17 @@ export function compatibilityRules() {
     return isStorageCompatible;
   };
 
-  const calculatePsuHeadroom: (psu: PSU, gpu: GPU) => number = (psu, gpu) => {
-    const headroom = psu.wattage - gpu.tdp;
-    return headroom;
-  };
+  const psuCompatibility = (gpu:GPU, cpu:CPU, psu: PSU): PsuCompatibility => {
+    const HEADROOM = 150
+    const isCompatible = HEADROOM >= 200;
+    const currentWattage = gpu.tdp + cpu.tdp + psu.wattage;
+    const recommendedWattage = currentWattage + HEADROOM;
+    console.log(ceilToMultiple(recommendedWattage, 50))
 
-  const psuCompatibility: (psu: PSU, gpu: GPU) => boolean = (psu, gpu) => {
-    const headroom = calculatePsuHeadroom(psu, gpu);
-    const isCompatible = headroom >= 200;
-
-    return isCompatible;
+    return {
+      isCompatible:isCompatible,
+      wattage: recommendedWattage,
+    };
   };
 
   const motherboardCaseCompatibility = (
@@ -212,7 +219,7 @@ export function compatibilityRules() {
       target: motherboards,
     },
     PSU: {
-      check: (psu: PSU, gpu: GPU) => psuCompatibility(psu, gpu),
+      check: (gpu: GPU,cpu: CPU,psu:PSU) => psuCompatibility(gpu, cpu, psu ),
       target: gpus,
     },
     Case: {

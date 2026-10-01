@@ -118,11 +118,13 @@ export type CASE = {
   color: string;
   rgb: boolean;
   temperedGlass: boolean;
-};
+};3
 
-export type ComponentType = "CPU" | "RAM" | "GPU" | "PSU" | "Motherboard" | "Case" | "Storage";
+export type ComponentType =
+  "CPU" | "RAM" | "GPU" | "PSU" | "Motherboard" | "Case" | "Storage";
 
-export type CompatibleComponent = CPU | GPU | PSU | RAM | Motherboard | CASE | STORAGE;
+export type CompatibleComponent =
+  CPU | GPU | PSU | RAM | Motherboard | CASE | STORAGE;
 
 export type CompatibilityResult = {
   selectedComponent: string;
@@ -134,7 +136,7 @@ export type CompatibilityResult = {
 type CompatibilityCheck = {
   bivarianceHack(
     selectedComponent: CompatibleComponent,
-    targetComponent: CompatibleComponent
+    targetComponent: CompatibleComponent,
   ): boolean | RuleCheckResult;
 }["bivarianceHack"];
 
@@ -144,51 +146,49 @@ export type CompatibilityRule = {
 };
 
 export type InstalledDrive = {
-  instanceId : string;
+  instanceId: string;
   product: STORAGE;
-}
+};
 
-export type Category =  "GPU" | "CPU" | "RAM" | "PSU" | "CASE" | "MOTHERBOARD"
+export type Category = "GPU" | "CPU" | "RAM" | "PSU" | "CASE" | "MOTHERBOARD";
 
 export type SavedBuild = {
   id: string;
   name: string;
   build: BUILD;
-}
+};
 
 export type preBuild = {
-    id: string;
-    name: string;
-    description: string;
-    tier: "Starter" | "Balanced" | "High-End" | "Workstation";
-    useCase: string[]
-    build: BUILD
-}
+  id: string;
+  name: string;
+  description: string;
+  tier: "Starter" | "Balanced" | "High-End" | "Workstation";
+  useCase: string[];
+  build: BUILD;
+};
 
 export type DetailedErrors = {
   type: "error" | "warning";
   rule: CompatiblityRule;
   title: string;
   compatibilityIssue: string;
-  source:ComponentRefernce;
+  source: ComponentRefernce;
   target: ComponentRefernce;
   suggestedAction: Category;
-}
+};
 
 type ComponentRefernce = {
   id: number;
   name: string;
   componentType: ComponentType;
   value: string;
-}
+};
 
 export type CompatiblityRule =
   | "CPU_MOTHERBOARD_SOCKET"
   | "RAM_MOTHERBOARD_TYPE"
   | "PSU_WATTAGE"
   | "GPU_CASE_CLEARANCE";
-
-
 
 export type RuleCheckResult =
   | {
@@ -198,3 +198,13 @@ export type RuleCheckResult =
       isCompatible: false;
       error: DetailedErrors;
     };
+
+export type CompatibilityFilter = "all" | "compatible";
+
+export type PsuCompatibility = {
+  check1: CompatibilityCheck;
+  check2: CompatibilityCheck;
+  target: CompatibleComponent[];
+  isCompatible: boolean;
+  wattage: number;
+};

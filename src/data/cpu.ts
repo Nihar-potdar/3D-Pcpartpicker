@@ -1,4 +1,3 @@
-import type { CPU } from "./type";
 
 export const cpus: CPU[] = [
   {

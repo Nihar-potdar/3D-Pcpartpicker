@@ -47,6 +47,9 @@ importers:
       cn:
         specifier: ^0.2.5
         version: 0.2.6
+      express:
+        specifier: ^5.2.1
+        version: 5.2.1(supports-color@5.5.0)
       gsap:
         specifier: ^3.15.0
         version: 3.15.0
